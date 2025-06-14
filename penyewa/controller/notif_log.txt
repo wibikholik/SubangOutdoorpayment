@@ -1,0 +1,147 @@
+Notifikasi diterima: 2025-06-12 14:09:17
+Data: {}
+UPDATE status: belumbayar untuk id_transaksi: 15 - SUKSES
+Notifikasi diterima: 2025-06-12 14:09:34
+Data: {}
+UPDATE status: dikonfirmasi (silahkan ambil barang) untuk id_transaksi: 15 - SUKSES
+Kurangi stok: Barang ID 5 dikurangi 1 - SUKSES
+Notifikasi diterima: 2025-06-12 14:12:47
+Data: {}
+UPDATE status: belumbayar untuk id_transaksi: 16 - SUKSES
+Notifikasi diterima: 2025-06-12 14:12:59
+Data: {}
+UPDATE status: Dikonfirmasi Pembayaran Silahkan AmbilBarang untuk id_transaksi: 16 - SUKSES
+Kurangi stok: Barang ID 9 dikurangi 1 - SUKSES
+Notifikasi diterima: 2025-06-12 14:53:50
+Data: {}
+UPDATE status: belumbayar untuk id_transaksi: 18 - SUKSES
+Notifikasi diterima: 2025-06-12 14:54:07
+Data: {}
+UPDATE status: Dikonfirmasi Pembayaran Silahkan AmbilBarang untuk id_transaksi: 18 - SUKSES
+Kurangi stok: Barang ID 9 dikurangi 1 - SUKSES
+Notifikasi diterima: 2025-06-13 01:36:39
+Data: {}
+UPDATE status: Dikonfirmasi Pembayaran Silahkan AmbilBarang untuk id_transaksi: 20 - SUKSES
+Kurangi stok: Barang ID 5 dikurangi 1 - SUKSES
+Notifikasi diterima: 2025-06-13 01:36:47
+Data: {}
+UPDATE status: Dikonfirmasi Pembayaran Silahkan AmbilBarang untuk id_transaksi: 20 - SUKSES
+Kurangi stok: Barang ID 5 dikurangi 1 - SUKSES
+Notifikasi diterima: 2025-06-13 03:07:22
+Data: {}
+UPDATE status: belumbayar untuk id_transaksi: 2 - SUKSES
+Notifikasi diterima: 2025-06-13 03:18:47
+ERROR: Midtrans API is returning API error. HTTP status code: 401 API response: {"status_code":"401","status_message":"Unknown Merchant server_key/id","id":"e2f0b64c-183a-4ce6-ab10-cd968d4b88e8"}
+Notifikasi diterima: 2025-06-13 03:19:36
+ERROR: Midtrans API is returning API error. HTTP status code: 401 API response: {"status_code":"401","status_message":"Unknown Merchant server_key/id","id":"9be39a35-0db6-4f2f-a123-c318a5b353d5"}
+Notifikasi diterima: 2025-06-13 03:28:06
+Data: {}
+UPDATE status: belumbayar untuk id_transaksi: 2 - SUKSES
+Notifikasi diterima: 2025-06-13 03:28:23
+Data: {}
+UPDATE status: Dikonfirmasi Pembayaran Silahkan AmbilBarang untuk id_transaksi: 2 - SUKSES
+Notifikasi diterima: 2025-06-13 03:39:18
+Data: {}
+Notifikasi diterima: 2025-06-13 03:40:22
+Data: {}
+Notifikasi diterima: 2025-06-13 03:53:31
+Data: {}
+UPDATE pengembalian status_pengembalian: belum bayar denda untuk id_pengembalian: 3 - SUKSES
+Notifikasi diterima: 2025-06-13 03:53:50
+Data: {}
+UPDATE pengembalian status_pengembalian: Dikonfirmasi Pembayaran Denda untuk id_pengembalian: 3 - SUKSES
+Notifikasi diterima: 2025-06-13 04:01:18
+Data: {}
+UPDATE status: belumbayar untuk id_transaksi: 21 - SUKSES
+Notifikasi diterima: 2025-06-13 04:01:32
+Data: {}
+UPDATE status: Dikonfirmasi Pembayaran Silahkan AmbilBarang untuk id_transaksi: 21 - SUKSES
+Kurangi stok: Barang ID 5 dikurangi 1 - SUKSES
+Notifikasi diterima: 2025-06-13 04:12:07
+Data: {}
+UPDATE pengembalian status_pengembalian: Dikonfirmasi Pembayaran Denda untuk id_pengembalian: 4 - SUKSES
+Notifikasi diterima: 2025-06-13 04:13:21
+Data: {}
+UPDATE pengembalian status_pengembalian: Dikonfirmasi Pembayaran Denda untuk id_pengembalian: 4 - SUKSES
+Notifikasi diterima: 2025-06-13 04:39:16
+Data: {}
+Update status_pengembalian: Dikonfirmasi Pembayaran Denda untuk ID 5
+Notifikasi diterima: 2025-06-13 04:41:36
+Data: {}
+Update status_pengembalian: Dikonfirmasi Pembayaran Denda untuk ID 5
+Notifikasi diterima: 2025-06-13 04:54:29
+Data: {}
+Update status_pengembalian: Belum Bayar Denda untuk ID 5
+Notifikasi diterima: 2025-06-13 04:54:47
+Data: {}
+Update status_pengembalian: Dikonfirmasi Pembayaran Denda untuk ID 5
+ERROR prepare select pengembalian: Unknown column 'id_barang' in 'field list'
+Notifikasi diterima: 2025-06-13 05:13:24
+Data: {}
+Update status_pengembalian: Belum Bayar Denda untuk ID 6
+Notifikasi diterima: 2025-06-13 05:13:45
+Data: {}
+Update status_pengembalian: Dikonfirmasi Pembayaran Denda untuk ID 6
+ERROR update status_pembayaran: Unknown column 'status_pembayaran' in 'field list'
+ERROR prepare select pengembalian: Unknown column 'id_barang' in 'field list'
+Notifikasi diterima: 2025-06-13 05:25:55
+Data: {}
+Update status_pengembalian: Belum Bayar Denda untuk ID 7
+Notifikasi diterima: 2025-06-13 05:26:19
+Data: {}
+Update status_pengembalian: Selesai Dikembalikan untuk ID 7
+Notifikasi diterima: 2025-06-13 05:42:49
+Data: {}
+Update status transaksi ID 22 ke 'Belum Bayar'
+Notifikasi diterima: 2025-06-13 05:43:03
+Data: {}
+Update status transaksi ID 22 ke 'Dikonfirmasi (Silahkan Ambil Barang)'
+Kurangi stok barang ID 5 sebanyak 1
+Notifikasi diterima: 2025-06-13 05:47:27
+Data: {}
+Update status_pengembalian: Belum Bayar Denda untuk ID 8
+Notifikasi diterima: 2025-06-13 05:47:44
+Data: {}
+Update status_pengembalian: Selesai Dikembalikan untuk ID 8
+Notifikasi diterima: 2025-06-13 06:04:58
+Data: {}
+Update status transaksi ID 23 ke 'Belum Bayar'
+Notifikasi diterima: 2025-06-13 06:05:46
+Data: {}
+Update status transaksi ID 23 ke 'Dikonfirmasi (Silahkan Ambil Barang)'
+Kurangi stok barang ID 4 sebanyak 1
+Notifikasi diterima: 2025-06-13 06:14:31
+Data: {}
+Update status_pengembalian: Belum Bayar Denda untuk ID 9
+Notifikasi diterima: 2025-06-13 06:14:55
+Data: {}
+Update status_pengembalian: Selesai Dikembalikan untuk ID 9
+Notifikasi diterima: 2025-06-13 06:33:24
+Data: {}
+Update status transaksi ID 25 ke 'Belum Bayar'
+Notifikasi diterima: 2025-06-13 06:38:30
+Data: {}
+Update status transaksi ID 28 ke 'Belum Bayar'
+Notifikasi diterima: 2025-06-13 06:39:00
+Data: {}
+Update status transaksi ID 28 ke 'Dikonfirmasi (Silahkan Ambil Barang)'
+Kurangi stok barang ID 20 sebanyak 1
+Notifikasi diterima: 2025-06-13 06:41:44
+Data: {}
+Update status_pengembalian: Belum Bayar Denda untuk ID 10
+
+=== Notifikasi Masuk: 2025-06-14 18:15:12 ===
+RAW: {"transaction_time":"2023-11-15 18:45:13","transaction_status":"settlement","transaction_id":"513f1f01-c9da-474c-9fc9-d5c64364b709","status_message":"midtrans payment notification","status_code":"200","signature_key":"29322f04c2d5c689666cb25b538c491bc501b6d8f94f78adef13582876558a2f5c5ba7420aac605e71739f51e4711ca4bc242ccb7fd1fafdeb7dbac130e0174e","settlement_time":"2023-11-15 22:45:13","payment_type":"gopay","order_id":"payment_notif_test_G931618194_1d0b00ef-500d-4332-abf9-8caf9ee4790a","merchant_id":"G931618194","gross_amount":"105000.00","fraud_status":"accept","currency":"IDR"}
+ERROR: Midtrans API is returning API error. HTTP status code: 404 API response: {"status_code":"404","status_message":"Transaction doesn't exist.","id":"80675d39-6bec-4b4c-9c92-7596f4d4b014"}
+
+=== Notifikasi Masuk: 2025-06-14 18:15:20 ===
+RAW: {"transaction_time":"2023-11-15 18:45:13","transaction_status":"settlement","transaction_id":"513f1f01-c9da-474c-9fc9-d5c64364b709","status_message":"midtrans payment notification","status_code":"200","signature_key":"737ac285e81a1033c8c3c064665c59b7b535fc189e5e4298ea19c52f8dd8829cdf905e690ce643b212846fa463480d6a4a13d0bc8c30ba3797422e60369f7369","settlement_time":"2023-11-15 22:45:13","payment_type":"gopay","order_id":"payment_notif_test_G931618194_e0fc542d-709b-41b6-998d-db04299429f1","merchant_id":"G931618194","gross_amount":"105000.00","fraud_status":"accept","currency":"IDR"}
+ERROR: Midtrans API is returning API error. HTTP status code: 404 API response: {"status_code":"404","status_message":"Transaction doesn't exist.","id":"0e724052-d5a9-45e6-b27b-f89c14d90d2f"}
+
+=== Notifikasi Masuk: 2025-06-14 18:15:52 ===
+RAW: {"transaction_time":"2023-11-15 18:45:13","transaction_status":"settlement","transaction_id":"513f1f01-c9da-474c-9fc9-d5c64364b709","status_message":"midtrans payment notification","status_code":"200","signature_key":"737ac285e81a1033c8c3c064665c59b7b535fc189e5e4298ea19c52f8dd8829cdf905e690ce643b212846fa463480d6a4a13d0bc8c30ba3797422e60369f7369","settlement_time":"2023-11-15 22:45:13","payment_type":"gopay","order_id":"payment_notif_test_G931618194_e0fc542d-709b-41b6-998d-db04299429f1","merchant_id":"G931618194","gross_amount":"105000.00","fraud_status":"accept","currency":"IDR"}
+ERROR: Midtrans API is returning API error. HTTP status code: 404 API response: {"status_code":"404","status_message":"Transaction doesn't exist.","id":"d907cb6a-effe-4fa8-8750-9927247cfbb8"}
+
+=== Notifikasi Masuk: 2025-06-14 18:15:59 ===
+RAW: {"transaction_time":"2023-11-15 18:45:13","transaction_status":"settlement","transaction_id":"513f1f01-c9da-474c-9fc9-d5c64364b709","status_message":"midtrans payment notification","status_code":"200","signature_key":"29322f04c2d5c689666cb25b538c491bc501b6d8f94f78adef13582876558a2f5c5ba7420aac605e71739f51e4711ca4bc242ccb7fd1fafdeb7dbac130e0174e","settlement_time":"2023-11-15 22:45:13","payment_type":"gopay","order_id":"payment_notif_test_G931618194_1d0b00ef-500d-4332-abf9-8caf9ee4790a","merchant_id":"G931618194","gross_amount":"105000.00","fraud_status":"accept","currency":"IDR"}
+ERROR: Midtrans API is returning API error. HTTP status code: 404 API response: {"status_code":"404","status_message":"Transaction doesn't exist.","id":"3f01d52b-35e5-4175-a23f-625e50a28a75"}

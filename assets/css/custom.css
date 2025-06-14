@@ -1,0 +1,9 @@
+/* assets/css/custom.css */
+
+#accordionSidebar {
+    background-image: linear-gradient(180deg, #8e2de2 10%, #4a00e0 100%);
+}
+
+#content-wrapper {
+    overflow: visible;
+}

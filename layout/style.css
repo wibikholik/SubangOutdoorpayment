@@ -1,0 +1,20 @@
+table {
+    
+    border-spacing: 1;
+    /* border-collapse: separate; */
+    /* border-spacing: 10px; */
+    width: 98%;
+}
+th, td {
+    padding: 10px 15px;
+    text-align: center;
+    
+    
+}
+thead {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+a.hapus, a.edit {
+    margin-right: 8px;
+}
