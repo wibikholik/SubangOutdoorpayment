@@ -145,3 +145,11 @@ ERROR: Midtrans API is returning API error. HTTP status code: 404 API response: 
 === Notifikasi Masuk: 2025-06-14 18:15:59 ===
 RAW: {"transaction_time":"2023-11-15 18:45:13","transaction_status":"settlement","transaction_id":"513f1f01-c9da-474c-9fc9-d5c64364b709","status_message":"midtrans payment notification","status_code":"200","signature_key":"29322f04c2d5c689666cb25b538c491bc501b6d8f94f78adef13582876558a2f5c5ba7420aac605e71739f51e4711ca4bc242ccb7fd1fafdeb7dbac130e0174e","settlement_time":"2023-11-15 22:45:13","payment_type":"gopay","order_id":"payment_notif_test_G931618194_1d0b00ef-500d-4332-abf9-8caf9ee4790a","merchant_id":"G931618194","gross_amount":"105000.00","fraud_status":"accept","currency":"IDR"}
 ERROR: Midtrans API is returning API error. HTTP status code: 404 API response: {"status_code":"404","status_message":"Transaction doesn't exist.","id":"3f01d52b-35e5-4175-a23f-625e50a28a75"}
+
+=== Notifikasi Masuk: 2025-06-15 06:13:38 ===
+RAW: '{}'
+ERROR: Payload JSON tidak valid atau order_id kosong.
+
+=== Notifikasi Masuk: 2025-06-15 06:15:26 ===
+RAW: '{}'
+ERROR: Payload JSON tidak valid atau order_id kosong.

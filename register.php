@@ -44,11 +44,25 @@
         input, textarea {
             width: 100%;
             padding: 10px 14px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border: 1.5px solid #ccc;
             border-radius: 8px;
             font-size: 16px;
             box-sizing: border-box;
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .show-password {
+            position: absolute;
+            right: 10px;
+            top: 11px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #007BFF;
+            user-select: none;
         }
 
         button {
@@ -86,7 +100,7 @@
 <body>
     <div class="register-container">
         <h2>Registrasi Penyewa</h2>
-        <form action="proses_register.php" method="POST">
+        <form action="proses_register.php" method="POST" novalidate onsubmit="return validateForm()">
             <label>Nama Penyewa</label>
             <input type="text" name="nama_penyewa" required>
 
@@ -94,13 +108,21 @@
             <textarea name="alamat" required></textarea>
 
             <label>No HP</label>
-            <input type="text" name="no_hp" required>
+<input type="number" name="no_hp" id="no_hp" required 
+       min="1"
+       oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+       title="Masukkan angka tanpa huruf">
+
 
             <label>Email</label>
             <input type="email" name="email" required>
 
             <label>Password</label>
-            <input type="password" name="password" required minlength="8" title="Password minimal harus terdiri dari 8 karakter">
+            <div class="password-container">
+                <input type="password" id="password" name="password" required minlength="8"
+                       title="Password minimal 8 karakter">
+                <span class="show-password" onclick="togglePassword()">👁️</span>
+            </div>
 
             <button type="submit" name="register">Daftar</button>
         </form>
@@ -108,5 +130,29 @@
             Sudah punya akun? <a href="login.php">Login di sini</a>
         </div>
     </div>
+
+    <script>
+        function togglePassword() {
+            const passwordField = document.getElementById("password");
+            passwordField.type = passwordField.type === "password" ? "text" : "password";
+        }
+
+        function validateForm() {
+            const noHp = document.querySelector('input[name="no_hp"]').value;
+            const password = document.getElementById("password").value;
+
+            if (!/^[0-9]+$/.test(noHp)) {
+                alert("Nomor HP hanya boleh berisi angka.");
+                return false;
+            }
+
+            if (password.length < 8) {
+                alert("Password harus lebih dari 7 karakter (minimal 8 karakter).");
+                return false;
+            }
+
+            return true;
+        }
+    </script>
 </body>
 </html>

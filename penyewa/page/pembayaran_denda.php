@@ -15,20 +15,10 @@ if ($id_pengembalian <= 0) {
     exit;
 }
 
-// Proses konfirmasi bayar langsung
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['metode_bayar']) && $_POST['metode_bayar'] == 'langsung') {
-    $update = mysqli_query($koneksi, "UPDATE pengembalian SET status_pembayaran = 'Menunggu Konfirmasi Pembayaran', id_metode = 3 WHERE id_pengembalian = $id_pengembalian AND id_transaksi IN (SELECT id_transaksi FROM transaksi WHERE id_penyewa = $id_penyewa)");
-    if ($update) {
-        echo "<script>alert('Pembayaran langsung dikonfirmasi. Silakan bayar ke toko.'); window.location.href='../page/transaksi.php';</script>";
-        exit;
-    } else {
-        echo "<script>alert('Gagal mengupdate status pembayaran.');</script>";
-    }
-}
-
-// Ambil data pengembalian
+// Ambil data pengembalian dan transaksi terkait
 $sql = "
-    SELECT p.*, t.id_transaksi, t.tanggal_sewa, t.tanggal_kembali, pe.nama_penyewa,
+    SELECT p.*, t.id_transaksi, t.tanggal_sewa, t.tanggal_kembali, t.status AS status_transaksi,
+           pe.nama_penyewa,
            dt.id_barang, b.nama_barang
     FROM pengembalian p
     JOIN transaksi t ON p.id_transaksi = t.id_transaksi
@@ -49,6 +39,29 @@ if (!$data) {
     exit;
 }
 
+// Proses konfirmasi bayar langsung
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['metode_bayar']) && $_POST['metode_bayar'] === 'bayar_langsung') {
+    // Update status pengembalian
+    $sql_update_pengembalian = "UPDATE pengembalian SET status_pengembalian = 'Menunggu Konfirmasi Pembayaran', snap_token = NULL WHERE id_pengembalian = ? AND id_transaksi = ?";
+    $stmt_update_pengembalian = mysqli_prepare($koneksi, $sql_update_pengembalian);
+    mysqli_stmt_bind_param($stmt_update_pengembalian, "ii", $id_pengembalian, $data['id_transaksi']);
+    $execute_pengembalian = mysqli_stmt_execute($stmt_update_pengembalian);
+
+    if ($execute_pengembalian) {
+        // Update status transaksi
+        $status_transaksi_baru = 'Menunggu Konfirmasi Pembayaran Denda'; // Atur sesuai alur kamu
+        $sql_update_transaksi = "UPDATE transaksi SET status = ? WHERE id_transaksi = ?";
+        $stmt_update_transaksi = mysqli_prepare($koneksi, $sql_update_transaksi);
+        mysqli_stmt_bind_param($stmt_update_transaksi, "si", $status_transaksi_baru, $data['id_transaksi']);
+        mysqli_stmt_execute($stmt_update_transaksi);
+
+        echo "<script>alert('Pembayaran langsung dikonfirmasi. Silakan bayar ke toko.'); window.location.href='../page/transaksi.php';</script>";
+        exit;
+    } else {
+        echo "<script>alert('Gagal mengupdate status pembayaran.');</script>";
+    }
+}
+
 // Ambil metode pembayaran
 $metode_q = mysqli_query($koneksi, "SELECT * FROM metode_pembayaran ORDER BY id_metode");
 $metode_list = [];
@@ -62,12 +75,6 @@ while ($m = mysqli_fetch_assoc($metode_q)) {
 <head>
     <meta charset="UTF-8" />
     <title>Pembayaran Denda #<?= htmlspecialchars($id_pengembalian) ?></title>
-    <link rel="stylesheet" href="css/linearicons.css">
-    <link rel="stylesheet" href="css/owl.carousel.css">
-    <link rel="stylesheet" href="css/font-awesome.min.css">
-    <link rel="stylesheet" href="css/themify-icons.css">
-    <link rel="stylesheet" href="css/nice-select.css">
-    <link rel="stylesheet" href="css/nouislider.min.css">
     <link rel="stylesheet" href="css/bootstrap.css">
     <link rel="stylesheet" href="css/main.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -125,19 +132,17 @@ while ($m = mysqli_fetch_assoc($metode_q)) {
                             <li>Denda <span><strong>Rp <?= number_format($data['denda'], 0, ',', '.'); ?></strong></span></li>
                         </ul>
 
-                        <form method="post" class="mt-4">
+                        <form method="post" class="mt-4" id="form-bayar">
                             <h4>Pilih Metode Pembayaran</h4>
                             <?php foreach ($metode_list as $metode): ?>
                                 <div class="form-check mt-2">
                                     <input class="form-check-input metode-radio" type="radio"
                                            name="metode_bayar"
                                            id="metode<?= $metode['id_metode']; ?>"
-                                           value="<?= $metode['nama_metode'] == 'Bayar Langsung' ? 'langsung' : 'online'; ?>"
-                                           <?= $metode['nama_metode'] == 'Bayar Online' ? 'checked' : ''; ?>>
+                                           value="<?= strtolower(str_replace(' ', '_', $metode['nama_metode'])); ?>"
+                                           <?= $metode['nama_metode'] === 'Bayar Online' ? 'checked' : ''; ?>>
                                     <label class="form-check-label" for="metode<?= $metode['id_metode']; ?>">
                                         <?= htmlspecialchars($metode['nama_metode']); ?> (<?= htmlspecialchars($metode['atas_nama']); ?>)
-                                      
-                                      
                                     </label>
                                 </div>
                             <?php endforeach; ?>
@@ -168,45 +173,44 @@ while ($m = mysqli_fetch_assoc($metode_q)) {
 document.addEventListener('DOMContentLoaded', function () {
     function toggleMetode() {
         const metode = document.querySelector('input[name="metode_bayar"]:checked')?.value;
-        document.getElementById('bayar-online').style.display = (metode === 'online') ? 'block' : 'none';
-        document.getElementById('bayar-langsung').style.display = (metode === 'langsung') ? 'block' : 'none';
+        document.getElementById('bayar-online').style.display = (metode === 'bayar_online') ? 'block' : 'none';
+        document.getElementById('bayar-langsung').style.display = (metode === 'bayar_langsung') ? 'block' : 'none';
     }
 
     document.querySelectorAll('.metode-radio').forEach(el => el.addEventListener('change', toggleMetode));
     toggleMetode();
 
-    document.getElementById('pay-button')?.addEventListener('click', function () {
-        snap.pay('<?= $data['snap_token']; ?>', {
-            onSuccess: function () {
-                alert('Pembayaran berhasil!');
-                window.location.href = '../page/transaksi.php';
-            },
-            onPending: function () {
-                alert('Pembayaran sedang diproses.');
-                window.location.href = '../page/transaksi.php';
-            },
-            onError: function () {
-                alert('Terjadi kesalahan.');
-            },
-            onClose: function () {
-                alert('Anda menutup popup pembayaran.');
-            }
+    const payButton = document.getElementById('pay-button');
+    if (payButton) {
+        payButton.addEventListener('click', function () {
+            const metode = document.querySelector('input[name="metode_bayar"]:checked')?.value;
+
+            if (metode !== 'bayar_online') return;
+
+            snap.pay('<?= $data['snap_token']; ?>', {
+                onSuccess: function () {
+                    alert('Pembayaran berhasil!');
+                    window.location.href = '../page/transaksi.php';
+                },
+                onPending: function () {
+                    alert('Pembayaran sedang diproses.');
+                    window.location.href = '../page/transaksi.php';
+                },
+                onError: function () {
+                    alert('Terjadi kesalahan saat pembayaran.');
+                },
+                onClose: function () {
+                    alert('Anda menutup popup pembayaran.');
+                }
+            });
         });
-    });
+    }
 });
 </script>
 
 <?php include("../layout/footer.php"); ?>
 <script src="js/vendor/jquery-2.2.4.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
 <script src="js/vendor/bootstrap.min.js"></script>
-<script src="js/jquery.ajaxchimp.min.js"></script>
-<script src="js/jquery.nice-select.min.js"></script>
-<script src="js/jquery.sticky.js"></script>
-<script src="js/nouislider.min.js"></script>
-<script src="js/jquery.magnific-popup.min.js"></script>
-<script src="js/owl.carousel.min.js"></script>
-<script src="js/gmaps.min.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

@@ -32,8 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         for ($i = 0; $i < count($id_checklist_arr); $i++) {
             $id_checklist = intval($id_checklist_arr[$i]);
-            $status_akhir = $koneksi->real_escape_string($status_akhir_arr[$i]);
-            $keterangan_akhir = $koneksi->real_escape_string($keterangan_akhir_arr[$i]);
+            $status_akhir = $status_akhir_arr[$i];
+            $keterangan_akhir = $keterangan_akhir_arr[$i];
 
             $stmt->bind_param("ssi", $status_akhir, $keterangan_akhir, $id_checklist);
             if (!$stmt->execute()) {

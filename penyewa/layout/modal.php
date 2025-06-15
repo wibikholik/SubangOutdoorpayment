@@ -10,7 +10,7 @@
         <p><strong><?php echo $row['nama_barang']; ?></strong></p>
         <p>Harga Sewa: Rp.<?php echo number_format($row['harga_sewa'], 0, ',', '.'); ?></p>
         <p>Stok tersedia: <?php echo $row['stok']; ?></p>
-        <form method="POST" action="/SubangOutdoor/penyewa/controller/tambah_keranjang.php">
+        <form method="POST" action="../controller/tambah_keranjang.php">
           <input type="hidden" name="id_barang" value="<?php echo $row['id_barang']; ?>">
           <input type="number" name="jumlah" class="form-control mb-2" placeholder="Jumlah" min="1" max="<?php echo $row['stok']; ?>" required>
           <button type="submit" class="btn btn-dark">Tambah ke Keranjang</button>

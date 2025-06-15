@@ -267,7 +267,8 @@ $diff = (int)$hari_ini->diff($tgl_kembali)->format("%r%a");
         }
     }
 // Jika status baru adalah "selesai dikembalikan", kirim email ucapan terima kasih
-if (strtolower($status_baru) === strtolower('Selesai Dikembalikan')) {
+// Jika status baru adalah "selesai dikembalikan", kirim email ucapan terima kasih
+if (strtolower($status_baru) === strtolower('selesai dikembalikan')) {
     // Ambil data email dan nama penyewa
     $query_email_thanks = "SELECT p.email, p.nama_penyewa 
                            FROM transaksi t 
@@ -318,7 +319,38 @@ if (strtolower($status_baru) === strtolower('Selesai Dikembalikan')) {
             error_log("Gagal mengirim email ucapan terima kasih: {$mail_thanks->ErrorInfo}");
         }
     }
+
+    // **Tambah stok barang sesuai detail transaksi**
+    $query_detail = "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?";
+    $stmt_detail = $koneksi->prepare($query_detail);
+    if (!$stmt_detail) {
+        die("Gagal prepare statement ambil detail transaksi untuk update stok: " . $koneksi->error);
+    }
+    $stmt_detail->bind_param("i", $id);
+    if (!$stmt_detail->execute()) {
+        die("Gagal execute query ambil detail transaksi untuk update stok: " . $stmt_detail->error);
+    }
+    $result_detail = $stmt_detail->get_result();
+
+    while ($row_detail = $result_detail->fetch_assoc()) {
+        $id_barang = $row_detail['id_barang'];
+        $jumlah = $row_detail['jumlah_barang'];
+
+        $update_stok = "UPDATE barang SET stok = stok + ? WHERE id_barang = ?";
+        $stmt_update_stok = $koneksi->prepare($update_stok);
+        if (!$stmt_update_stok) {
+            die("Gagal prepare statement update stok barang: " . $koneksi->error);
+        }
+        $stmt_update_stok->bind_param("ii", $jumlah, $id_barang);
+        if (!$stmt_update_stok->execute()) {
+            die("Gagal update stok barang: " . $stmt_update_stok->error);
+        }
+        $stmt_update_stok->close();
+    }
+    $stmt_detail->close();
 }
+
+
 
     // Redirect kembali ke halaman transaksi dengan pesan sukses
     header('Location: transaksi.php?status=success');

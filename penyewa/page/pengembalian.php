@@ -14,57 +14,49 @@ if (!$id_transaksi) {
 }
 
 // Ambil data transaksi utama
-$query = "SELECT * FROM transaksi WHERE id_transaksi = $id_transaksi AND id_penyewa = $id_penyewa";
-$result = mysqli_query($koneksi, $query);
-if (!$result) {
-    die("Query transaksi error: " . mysqli_error($koneksi));
-}
-$data = mysqli_fetch_assoc($result);
+$query = "SELECT * FROM transaksi WHERE id_transaksi = ? AND id_penyewa = ?";
+$stmt = $koneksi->prepare($query);
+$stmt->bind_param("ii", $id_transaksi, $id_penyewa);
+$stmt->execute();
+$result = $stmt->get_result();
+$data = $result->fetch_assoc();
+$stmt->close();
+
 if (!$data) {
     die("Transaksi tidak ditemukan.");
 }
 
 // Ambil nama penyewa
-$query_penyewa = "
-    SELECT u.nama_penyewa
-    FROM penyewa u
-    JOIN transaksi t ON u.id_penyewa = t.id_penyewa
-    WHERE t.id_transaksi = $id_transaksi AND t.id_penyewa = $id_penyewa
-";
-$result_penyewa = mysqli_query($koneksi, $query_penyewa);
-if (!$result_penyewa) {
-    die("Query penyewa error: " . mysqli_error($koneksi));
-}
-$penyewa = mysqli_fetch_assoc($result_penyewa);
+$query_penyewa = "SELECT nama_penyewa FROM penyewa WHERE id_penyewa = ?";
+$stmt2 = $koneksi->prepare($query_penyewa);
+$stmt2->bind_param("i", $id_penyewa);
+$stmt2->execute();
+$result_penyewa = $stmt2->get_result();
+$penyewa = $result_penyewa->fetch_assoc();
+$stmt2->close();
 
 // Ambil nomor rekening metode pembayaran
-$query_rekening = "
-    SELECT m.nomor_rekening
-    FROM transaksi t
-    JOIN metode_pembayaran m ON t.id_metode = m.id_metode
-    WHERE t.id_transaksi = $id_transaksi
-";
-$result_metode = mysqli_query($koneksi, $query_rekening);
-if (!$result_metode) {
-    die("Query metode error: " . mysqli_error($koneksi));
-}
-$metode = mysqli_fetch_assoc($result_metode);
+$query_rekening = "SELECT nomor_rekening FROM metode_pembayaran WHERE id_metode = ?";
+$stmt3 = $koneksi->prepare($query_rekening);
+$stmt3->bind_param("i", $data['id_metode']);
+$stmt3->execute();
+$result_metode = $stmt3->get_result();
+$metode = $result_metode->fetch_assoc();
+$stmt3->close();
 
 // Ambil data barang yang disewa
 $query_barang = "
     SELECT dt.*, b.nama_barang, b.gambar, b.kategori
     FROM detail_transaksi dt
     JOIN barang b ON dt.id_barang = b.id_barang
-    WHERE dt.id_transaksi = $id_transaksi
+    WHERE dt.id_transaksi = ?
 ";
-$result_barang = mysqli_query($koneksi, $query_barang);
-if (!$result_barang) {
-    die("Query detail barang error: " . mysqli_error($koneksi));
-}
-$barang_list = [];
-while ($row = mysqli_fetch_assoc($result_barang)) {
-    $barang_list[] = $row;
-}
+$stmt4 = $koneksi->prepare($query_barang);
+$stmt4->bind_param("i", $id_transaksi);
+$stmt4->execute();
+$result_barang = $stmt4->get_result();
+$barang_list = $result_barang->fetch_all(MYSQLI_ASSOC);
+$stmt4->close();
 
 // Hitung lama sewa dan denda
 $tanggal_kembali = new DateTime($data['tanggal_kembali']);
@@ -86,13 +78,14 @@ $query_checklist = "
            IFNULL(c.keterangan_akhir, '') AS keterangan_akhir
     FROM checklist c
     JOIN kelengkapan_barang k ON c.id_kelengkapan = k.id_kelengkapan
-    WHERE c.id_transaksi = $id_transaksi
+    WHERE c.id_transaksi = ?
 ";
-$result_checklist = mysqli_query($koneksi, $query_checklist);
-$checklist_list = [];
-while ($row = mysqli_fetch_assoc($result_checklist)) {
-    $checklist_list[] = $row;
-}
+$stmt5 = $koneksi->prepare($query_checklist);
+$stmt5->bind_param("i", $id_transaksi);
+$stmt5->execute();
+$result_checklist = $stmt5->get_result();
+$checklist_list = $result_checklist->fetch_all(MYSQLI_ASSOC);
+$stmt5->close();
 ?>
 
 <!DOCTYPE html>
@@ -101,12 +94,6 @@ while ($row = mysqli_fetch_assoc($result_checklist)) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pengembalian - Subang Outdoor</title>
-  <link rel="stylesheet" href="css/linearicons.css" />
-  <link rel="stylesheet" href="css/owl.carousel.css" />
-  <link rel="stylesheet" href="css/themify-icons.css" />
-  <link rel="stylesheet" href="css/font-awesome.min.css" />
-  <link rel="stylesheet" href="css/nice-select.css" />
-  <link rel="stylesheet" href="css/nouislider.min.css" />
   <link rel="stylesheet" href="css/bootstrap.css" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="shortcut icon" href="../../assets/img/logo.jpg" />
@@ -165,7 +152,7 @@ while ($row = mysqli_fetch_assoc($result_checklist)) {
     <?php endif; ?>
 
     <h2>Form Pengembalian Barang</h2>
-    <form action="../controller/prosesPengembalian.php" method="post">
+    <form action="../controller/prosesPengembalian.php" method="post" onsubmit="return validateForm()">
       <input type="hidden" name="id_transaksi" value="<?= $id_transaksi ?>">
 
       <?php if (count($checklist_list) > 0): ?>
@@ -211,17 +198,22 @@ while ($row = mysqli_fetch_assoc($result_checklist)) {
   </div>
 </section>
 
-<!-- Script JS -->
+<script>
+function validateForm() {
+  const selects = document.querySelectorAll('select[name="status_akhir[]"]');
+  for (const select of selects) {
+    if (!select.value) {
+      alert('Semua status akhir harus dipilih!');
+      select.focus();
+      return false;
+    }
+  }
+  return true;
+}
+</script>
+
 <script src="js/vendor/jquery-2.2.4.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
 <script src="js/vendor/bootstrap.min.js"></script>
-<script src="js/jquery.ajaxchimp.min.js"></script>
-<script src="js/jquery.nice-select.min.js"></script>
-<script src="js/jquery.sticky.js"></script>
-<script src="js/nouislider.min.js"></script>
-<script src="js/jquery.magnific-popup.min.js"></script>
-<script src="js/owl.carousel.min.js"></script>
-<script src="js/gmaps.min.js"></script>
 <script src="js/main.js"></script>
 </body>
 

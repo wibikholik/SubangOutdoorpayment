@@ -78,7 +78,7 @@ $result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
     <link rel="stylesheet" href="css/nouislider.min.css" />
     <link rel="stylesheet" href="css/bootstrap.css" />
     <link rel="stylesheet" href="css/main.css" />
-     <link rel="shortcut icon" href="../../assets/img/logo.jpg">
+    <link rel="shortcut icon" href="../../assets/img/logo.jpg">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 
@@ -105,20 +105,22 @@ $result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
     <section class="checkout_area section_gap">
         <div class="container">
             <div class="info mb-3" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                  <strong>Nama Penyewa</strong><br />
-                  <?= htmlspecialchars($penyewa['nama_penyewa']) ?>
+                <div>
+                    <strong>Nama Penyewa</strong><br />
+                    <?= htmlspecialchars($penyewa['nama_penyewa']) ?>
                 </div>
                 <div>
-                  <strong>No. HP</strong><br />
-                  <?= htmlspecialchars($penyewa['no_hp']) ?>
+                    <strong>No. HP</strong><br />
+                    <?= htmlspecialchars($penyewa['no_hp']) ?>
                 </div>
                 <div>
-                  <strong>Alamat</strong><br />
-                  <small><?= htmlspecialchars($penyewa['alamat']) ?></small>
+                    <strong>Alamat</strong><br />
+                    <small><?= htmlspecialchars($penyewa['alamat']) ?></small>
                 </div>
-             </div>
+            </div>
+
             <h3>Daftar Pesanan</h3>
+
             <?php if ($result_carts->num_rows > 0) :
                 $cart_items = $result_carts->fetch_all(MYSQLI_ASSOC);
             ?>
@@ -141,25 +143,31 @@ $result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
                     </div>
 
                     <div style="min-width: 300px;">
-                       <label for="tanggal_sewa" class="fw-bold fs-6">Sewa:</label>
-<input type="date" id="tanggal_sewa" name="tanggal_sewa" class="w3-input w3-border mb-3" required
-       style="font-size:14px; padding:6px;"
-       min="<?= date('Y-m-d') ?>" />
+                        <label for="tanggal_sewa" class="fw-bold fs-6">Sewa:</label>
+                        <input type="date" id="tanggal_sewa" name="tanggal_sewa" class="w3-input w3-border mb-3" required
+                            style="font-size:14px; padding:6px;"
+                            min="<?= date('Y-m-d') ?>" />
 
-<label for="tanggal_kembali" class="fw-bold fs-6">Kembali:</label>
-<input type="date" id="tanggal_kembali" name="tanggal_kembali" class="w3-input w3-border mb-3" required
-       style="font-size:14px; padding:6px;"
-       min="<?= date('Y-m-d') ?>" />
+                        <label for="tanggal_kembali" class="fw-bold fs-6">Kembali:</label>
+                        <input type="date" id="tanggal_kembali" name="tanggal_kembali" class="w3-input w3-border mb-3" required
+                            style="font-size:14px; padding:6px;"
+                            min="<?= date('Y-m-d') ?>" />
+
                         <h4>Metode Pembayaran</h4>
                         <?php
                         if ($result_metode->num_rows > 0) :
+                            $first = true;
                             while ($metode = $result_metode->fetch_assoc()) : ?>
-                                <label class="me-3" style="cursor:pointer;">
-                                    <input type="radio" name="id_metode" value="<?= (int)$metode['id_metode'] ?>" required />
+                                <label class="me-3" style="cursor:pointer;" title="<?= htmlspecialchars($metode['nama_metode']) ?>">
+                                    <input type="radio" name="id_metode" value="<?= (int)$metode['id_metode'] ?>" <?= $first ? 'checked' : '' ?> required />
                                     <img src="../../metode_pembayaran/metode/gambar/<?= htmlspecialchars($metode['gambar_metode']) ?>" alt="<?= htmlspecialchars($metode['nama_metode']) ?>" style="height:40px;" />
+                                    <span><?= htmlspecialchars($metode['nama_metode']) ?></span>
                                 </label>
-                            <?php endwhile;
-                        endif; ?>
+                        <?php
+                                $first = false;
+                            endwhile;
+                        endif;
+                        ?>
 
                         <h4>Total Bayar</h4>
                         <div id="total_bayar_display" class="fw-bold fs-5 mb-3">Rp 0</div>
@@ -234,10 +242,11 @@ $result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
         // Update harga saat load halaman (jika ada tanggal default)
         window.addEventListener('load', updateTotalBayar);
     </script>
-    </script>
+
     <script src="js/vendor/jquery-2.2.4.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4"
-        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"
+        integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous">
+    </script>
     <script src="js/vendor/bootstrap.min.js"></script>
     <script src="js/jquery.ajaxchimp.min.js"></script>
     <script src="js/jquery.nice-select.min.js"></script>
@@ -250,5 +259,7 @@ $result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
     <script src="js/gmaps.min.js"></script>
     <script src="js/main.js"></script>
 </body>
+
 <?php include("../layout/footer.php") ?>
+
 </html>
