@@ -5,8 +5,17 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$username = $_SESSION['username'] ?? 'Guest';
 $id_penyewa = $_SESSION['user_id'] ?? 0;
+
+// Ambil nama penyewa dari database kalau user sudah login
+$nama_penyewa = 'Guest';
+if ($id_penyewa) {
+    $query_nama = mysqli_query($koneksi, "SELECT nama_penyewa FROM penyewa WHERE id_penyewa = '$id_penyewa' LIMIT 1");
+    if ($query_nama && mysqli_num_rows($query_nama) > 0) {
+        $row = mysqli_fetch_assoc($query_nama);
+        $nama_penyewa = $row['nama_penyewa'];
+    }
+}
 
 // Ambil jumlah item di keranjang
 $jumlah_cart = 0;
@@ -16,6 +25,7 @@ if ($id_penyewa) {
   $jumlah_cart = $data_cart['total'] ?? 0;
 }
 ?>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 .cart-badge {
@@ -71,7 +81,7 @@ if ($id_penyewa) {
             <!-- Dropdown Profil -->
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fas fa-user-circle"></i> <?= htmlspecialchars($username) ?>
+                <i class="fas fa-user-circle"></i> <?= htmlspecialchars($nama_penyewa) ?>
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                 <?php if (!isset($_SESSION['user_id'])): ?>

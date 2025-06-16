@@ -135,7 +135,7 @@ $result_transaksi = $stmt->get_result();
                   <span class="text-danger">Token pembayaran belum tersedia.</span>
                 <?php endif; ?>
 
-              <?php elseif ($status === 'Dikonfirmasi Pembayaran Silahkan AmbilBarang' || $status === 'Dikonfirmasi (Silahkan Ambil Barang)'): ?>
+              <?php elseif ($status === 'dikonfirmasi pembayaran silahkan ambilbarang' || $status === 'Dikonfirmasi (Silahkan Ambil Barang)'): ?>
                 <?php if ($transaksi['status_checklist'] == 0): ?>
                   <a href="checklist.php?id_transaksi=<?= $id_transaksi ?>" class="btn btn-sm btn-warning">Form pengambilan Barang</a>
                 <?php else: ?>

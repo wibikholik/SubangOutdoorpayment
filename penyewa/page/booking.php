@@ -160,7 +160,6 @@ $result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
                             while ($metode = $result_metode->fetch_assoc()) : ?>
                                 <label class="me-3" style="cursor:pointer;" title="<?= htmlspecialchars($metode['nama_metode']) ?>">
                                     <input type="radio" name="id_metode" value="<?= (int)$metode['id_metode'] ?>" <?= $first ? 'checked' : '' ?> required />
-                                    <img src="../../metode_pembayaran/metode/gambar/<?= htmlspecialchars($metode['gambar_metode']) ?>" alt="<?= htmlspecialchars($metode['nama_metode']) ?>" style="height:40px;" />
                                     <span><?= htmlspecialchars($metode['nama_metode']) ?></span>
                                 </label>
                         <?php

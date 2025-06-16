@@ -89,9 +89,13 @@ if (isset($_GET['msg'])) {
                                             <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengembalian'])) ?></td>
                                             <td><span class="badge badge-<?= $row['status_pengembalian'] === 'Selesai' ? 'success' : 'warning' ?>"><?= $row['status_pengembalian'] ?? '-' ?></span></td>
                                             <td>Rp<?= number_format($row['denda'] ?? 0, 0, ',', '.') ?></td>
-                                            <td>
-                                              <a href="detail_pengembalian.php?id_pengembalian=<?= $row['id_pengembalian'] ?>" class="btn btn-info btn-sm">Detail</a>
-
+                                           <td>
+                                            <a href="detail_pengembalian.php?id_pengembalian=<?= $row['id_pengembalian'] ?>" class="btn btn-info btn-sm">Detail</a>
+                                            <a href="delete_pengembalian.php?id_pengembalian=<?= $row['id_pengembalian'] ?>" 
+                                                class="btn btn-danger btn-sm" 
+                                                onclick="return confirm('Yakin ingin menghapus data ini?');">
+                                                Hapus
+                                            </a>
                                             </td>
                                         </tr>
                                     <?php endwhile; ?>

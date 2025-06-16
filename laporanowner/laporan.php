@@ -8,7 +8,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'owner') {
     exit;
 }
 
-// Fungsi bantu untuk ambil total
+// Fungsi bantu untuk ambil total pendapatan
 function getTotalByPeriod($koneksi, $interval, $bulan = null, $tahun = null) {
     $where = "";
     if ($bulan && $tahun) {
@@ -29,15 +29,38 @@ function getTotalByPeriod($koneksi, $interval, $bulan = null, $tahun = null) {
     return $data['total'] ?? 0;
 }
 
+// Fungsi bantu untuk ambil total denda
+function getTotalDendaByPeriod($koneksi, $interval, $bulan = null, $tahun = null) {
+    $where = "";
+    if ($bulan && $tahun) {
+        $where = "AND MONTH(p.tanggal_pengembalian) = '$bulan' AND YEAR(p.tanggal_pengembalian) = '$tahun'";
+    }
+    $query = "
+        SELECT SUM(p.denda) AS total_denda 
+        FROM pengembalian p
+        WHERE p.status_pengembalian = 'Selesai Dikembalikan' 
+        AND p.tanggal_pengembalian >= DATE_SUB(CURDATE(), INTERVAL $interval) $where
+    ";
+    $result = mysqli_query($koneksi, $query);
+    if (!$result) {
+        die("Query getTotalDendaByPeriod error: " . mysqli_error($koneksi));
+    }
+    $data = mysqli_fetch_assoc($result);
+    return $data['total_denda'] ?? 0;
+}
+
 // Ambil filter bulan dan tahun dari GET
 $bulan = isset($_GET['bulan']) ? intval($_GET['bulan']) : null;
 $tahun = isset($_GET['tahun']) ? intval($_GET['tahun']) : null;
 
-// Data ringkasan
+// Data ringkasan pendapatan
 $total_harian = getTotalByPeriod($koneksi, "1 DAY", $bulan, $tahun);
 $total_mingguan = getTotalByPeriod($koneksi, "7 DAY", $bulan, $tahun);
 $total_bulanan = getTotalByPeriod($koneksi, "1 MONTH", $bulan, $tahun);
 $total_tahunan = getTotalByPeriod($koneksi, "1 YEAR", $bulan, $tahun);
+
+// Data ringkasan denda (ambil total denda tahun ini, bisa sesuaikan intervalnya)
+$total_denda = getTotalDendaByPeriod($koneksi, "1 YEAR", $bulan, $tahun);
 
 // Filter tambahan untuk transaksi dan grafik
 $whereFilter = "";
@@ -185,19 +208,27 @@ while ($row = mysqli_fetch_assoc($pengembalian)) {
                             <?php endforeach; ?>
                         </div>
                     </div>
-
-                   
+                    <div class="col-lg-3">
+                        <div class="card border-left-danger shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Total Denda </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">Rp.<?= number_format($total_denda, 0, ',', '.') ?></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
- <div class="col-auto">
-    <div class="card shadow mb-4" style="max-width: 350px;">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Grafik Sumber Penghasilan</h6>
-        </div>
-        <div class="card-body">
-            <canvas id="chartMetode" style="height: 300px;"></canvas>
-        </div>
-    </div>
-</div>
+
+                <!-- Grafik Sumber Penghasilan -->
+                <div class="col-auto">
+                    <div class="card shadow mb-4" style="max-width: 350px;">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Grafik Sumber Penghasilan</h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chartMetode" style="height: 300px;"></canvas>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Tabel Transaksi -->
                 <div class="card shadow mb-4">
@@ -277,11 +308,40 @@ while ($row = mysqli_fetch_assoc($pengembalian)) {
 
             </div>
         </div>
-      
+       
     </div>
 </div>
 
-<!-- Scripts -->
+<!-- Script ChartJS -->
+<script>
+    const ctx = document.getElementById('chartMetode').getContext('2d');
+    const chartMetode = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: <?= json_encode($chart_labels) ?>,
+            datasets: [{
+                label: 'Total Pendapatan',
+                data: <?= json_encode($chart_data) ?>,
+                backgroundColor: [
+                    '#4e73df',
+                    '#1cc88a',
+                    '#36b9cc',
+                    '#f6c23e',
+                    '#e74a3b',
+                    '#858796'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+
 <script src="../assets/vendor/jquery/jquery.min.js"></script>
 <script src="../assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="../assets/vendor/jquery-easing/jquery.easing.min.js"></script>
@@ -292,25 +352,6 @@ while ($row = mysqli_fetch_assoc($pengembalian)) {
 $(document).ready(function() {
     $('#dataTableTransaksi').DataTable();
     $('#dataTablePengembalian').DataTable();
-});
-const ctx = document.getElementById('chartMetode').getContext('2d');
-const chartMetode = new Chart(ctx, {
-    type: 'pie',
-    data: {
-        labels: <?= json_encode($chart_labels) ?>,
-        datasets: [{
-            data: <?= json_encode($chart_data) ?>,
-            backgroundColor: ['#4e73df','#1cc88a','#36b9cc','#f6c23e','#e74a3b','#858796'],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { position: 'bottom' },
-            title: { display: true, text: 'Distribusi Pendapatan berdasarkan Metode Pembayaran' }
-        }
-    }
 });
 </script>
 </body>
