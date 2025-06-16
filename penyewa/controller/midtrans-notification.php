@@ -47,7 +47,7 @@ if ($transaction_status == 'capture') {
         $status_baru = 'dikonfirmasi'; // pembayaran sukses
     }
 } else if ($transaction_status == 'settlement') {
-    $status_baru = 'dikonfirmasi'; // pembayaran settled sukses
+    $status_baru = 'dikonfirmasi pembayaran silahkan ambilbarang'; // pembayaran settled sukses
 } else if ($transaction_status == 'pending') {
     $status_baru = 'belumbayar'; // belum dibayar
 } else if ($transaction_status == 'deny') {

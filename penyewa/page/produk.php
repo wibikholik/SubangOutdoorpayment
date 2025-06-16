@@ -138,7 +138,7 @@ $result = mysqli_query($koneksi, $query);
                     <img class="img-fluid" src="../../barang/barang/gambar/<?php echo $row['gambar']; ?>" alt="<?php echo $row['nama_barang']; ?>">
                     <div class="product-details">
                       <h6><?php echo $row['nama_barang']; ?></h6>
-                      <h6>Stok:<?php echo $row['stok']; ?></h6>
+                      <h6>Stok<?php echo $row['stok']; ?></h6>
                       <div class="price">
                         <h6>Rp <?php echo number_format($row['harga_sewa'], 0, ',', '.'); ?></h6>
                       </div>
