@@ -9,12 +9,12 @@ include "../route/koneksi.php";
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Edit Data Admin</title>
-    <link href="../assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,400,700" rel="stylesheet">
-    <link href="../assets/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="../assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,400,700" rel="stylesheet" />
+    <link href="../assets/css/sb-admin-2.min.css" rel="stylesheet" />
 </head>
 <body id="page-top">
 
@@ -56,40 +56,72 @@ include "../route/koneksi.php";
 
                 <div class="card shadow mb-4">
                     <div class="card-body">
-                        <form action="update.php" method="post">
-                            <input type="hidden" name="id_admin" value="<?= $data['id_admin']; ?>">
+                        <form action="update.php" method="post" novalidate>
+                            <input type="hidden" name="id_admin" value="<?= $data['id_admin']; ?>" />
 
                             <div class="form-group">
                                 <label>Username</label>
-                                <input type="text" name="username" class="form-control" value="<?= htmlspecialchars($data['username']); ?>" required>
+                                <input type="text" name="username" class="form-control" 
+                                       value="<?= htmlspecialchars($data['username']); ?>" 
+                                       required
+                                       oninvalid="this.setCustomValidity('Username wajib diisi')"
+                                       oninput="this.setCustomValidity('')"
+                                />
                             </div>
 
                             <div class="form-group">
                                 <label>Nama Admin</label>
-                                <input type="text" name="nama_admin" class="form-control" value="<?= htmlspecialchars($data['nama_admin']); ?>" required>
+                                <input type="text" name="nama_admin" class="form-control" 
+                                       value="<?= htmlspecialchars($data['nama_admin']); ?>" 
+                                       required
+                                       oninvalid="this.setCustomValidity('Nama Admin wajib diisi')"
+                                       oninput="this.setCustomValidity('')"
+                                />
                             </div>
 
                             <div class="form-group">
                                 <label>Alamat</label>
-                                <input type="text" name="alamat" class="form-control" value="<?= htmlspecialchars($data['alamat']); ?>" required>
+                                <input type="text" name="alamat" class="form-control" 
+                                       value="<?= htmlspecialchars($data['alamat']); ?>" 
+                                       required
+                                       oninvalid="this.setCustomValidity('Alamat wajib diisi')"
+                                       oninput="this.setCustomValidity('')"
+                                />
                             </div>
 
                             <div class="form-group">
                                 <label>No HP</label>
-                                <input type="tel" name="no_hp" class="form-control" value="<?= htmlspecialchars($data['no_hp']); ?>" required>
+                                <input type="tel" name="no_hp" class="form-control" 
+                                       value="<?= htmlspecialchars($data['no_hp']); ?>" 
+                                       pattern="[0-9]+" inputmode="numeric" required
+                                       oninvalid="this.setCustomValidity('No HP harus berupa angka dan wajib diisi')"
+                                       oninput="this.setCustomValidity('')"
+                                />
                             </div>
 
                             <div class="form-group">
                                 <label>Email</label>
-                                <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($data['email']); ?>" required>
+                                <input type="email" name="email" class="form-control" 
+                                       value="<?= htmlspecialchars($data['email']); ?>" 
+                                       required
+                                       oninvalid="this.setCustomValidity('Email tidak valid dan wajib diisi')"
+                                       oninput="this.setCustomValidity('')"
+                                />
                             </div>
 
                             <div class="form-group">
                                 <label>Password</label>
-                                <input type="text" name="password" class="form-control" value="<?= htmlspecialchars($data['password']); ?>" required>
+                                <input type="text" name="password" class="form-control" 
+                                       value="<?= htmlspecialchars($data['password']); ?>" 
+                                       minlength="9" required
+                                       oninvalid="this.setCustomValidity('Password harus lebih dari 8 karakter')"
+                                       oninput="this.setCustomValidity('')"
+                                />
                             </div>
 
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Perubahan</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Simpan Perubahan
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -104,7 +136,6 @@ include "../route/koneksi.php";
                 endif;
                 ?>
             </div>
-
         </div>
     </div>
 </div>

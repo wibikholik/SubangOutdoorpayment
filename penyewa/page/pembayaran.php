@@ -61,6 +61,7 @@ while ($row = mysqli_fetch_assoc($resultDetail)) {
     <!-- Style & Midtrans -->
     <link rel="stylesheet" href="css/bootstrap.css">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="shortcut icon" href="../../assets/img/logo.jpg">
     <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-3qUv-F-EtozaPD5I"></script>
     <style>
         h1, h3, h4 { text-align: center; }
@@ -72,6 +73,19 @@ while ($row = mysqli_fetch_assoc($resultDetail)) {
 </head>
 <body>
 <?php include('../layout/navbar1.php') ?>
+<section class="banner-area organic-breadcrumb">
+  <div class="container">
+    <div class="breadcrumb-banner d-flex flex-wrap align-items-center justify-content-end">
+      <div class="col-first">
+        <h1>Subang Outdoor</h1>
+        <nav class="d-flex align-items-center">
+          <p>Pembayaran:</p>
+          <p>Nomor Transaksi: <strong><?= htmlspecialchars($id_transaksi) ?></strong></p>
+        </nav>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section class="checkout_area section_gap">
     <div class="container-fluid">
@@ -81,13 +95,14 @@ while ($row = mysqli_fetch_assoc($resultDetail)) {
                     <h3 class="mb-4">Pembayaran Transaksi #<?= htmlspecialchars($id_transaksi) ?></h3>
                     <div class="order_box">
                         <h4>Informasi Penyewa</h4>
+                        <hr>
                         <ul class="list">
                             <li>Nama Penyewa <span><?= htmlspecialchars($transaksi['nama_penyewa']) ?></span></li>
                             <li>Metode Pembayaran <span><?= htmlspecialchars($transaksi['nama_metode']) ?></span></li>
                             <li>Tanggal Sewa <span><?= htmlspecialchars($transaksi['tanggal_sewa']) ?></span></li>
                             <li>Tanggal Kembali <span><?= htmlspecialchars($transaksi['tanggal_kembali']) ?></span></li>
                         </ul>
-
+<hr>
                         <h4 class="mt-4">Detail Barang Disewa</h4>
                         <ul class="list">
                             <?php
@@ -140,7 +155,14 @@ while ($row = mysqli_fetch_assoc($resultDetail)) {
 
 <?php include("../layout/footer.php"); ?>
 <script src="js/vendor/jquery-2.2.4.min.js"></script>
-<script src="js/vendor/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/jquery.ajaxchimp.min.js"></script>
+<script src="js/jquery.nice-select.min.js"></script>
+<script src="js/jquery.sticky.js"></script>
+<script src="js/nouislider.min.js"></script>
+<script src="js/jquery.magnific-popup.min.js"></script>
+<script src="js/owl.carousel.min.js"></script>
+<script src="js/gmaps.min.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

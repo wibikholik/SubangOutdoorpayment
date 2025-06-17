@@ -40,6 +40,7 @@ if (isset($_GET['msg'])) {
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,400,700" rel="stylesheet">
     <link href="../assets/css/sb-admin-2.min.css" rel="stylesheet">
     <link href="../assets/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link rel="shortcut icon" href="../../assets/img/logo.jpg">
 </head>
 <body id="page-top">
 <div id="wrapper">

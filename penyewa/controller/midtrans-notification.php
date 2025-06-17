@@ -17,7 +17,7 @@ try {
     $transaction_status = $notif->transaction_status;
     $fraud_status = $notif->fraud_status;
 
-    // Cari transaksi berdasarkan order_id
+    // Cek di tabel transaksi
     $stmt = mysqli_prepare($koneksi, "SELECT * FROM transaksi WHERE order_id = ?");
     mysqli_stmt_bind_param($stmt, "s", $order_id);
     mysqli_stmt_execute($stmt);
@@ -43,8 +43,27 @@ try {
                 $status_baru = 'Pembayaran Ditolak';
                 break;
             case 'cancel':
-            case 'expire':
                 $status_baru = 'Dibatalkan';
+                break;
+            case 'expire':
+                // Hapus pembayaran (jika ada)
+                $stmtBayar = mysqli_prepare($koneksi, "DELETE FROM pembayaran WHERE id_transaksi = ?");
+                mysqli_stmt_bind_param($stmtBayar, "i", $id_transaksi);
+                mysqli_stmt_execute($stmtBayar);
+
+                // Hapus detail transaksi
+                $stmtDelDetail = mysqli_prepare($koneksi, "DELETE FROM detail_transaksi WHERE id_transaksi = ?");
+                mysqli_stmt_bind_param($stmtDelDetail, "i", $id_transaksi);
+                mysqli_stmt_execute($stmtDelDetail);
+
+                // Hapus transaksi utama
+                $stmtDelTrans = mysqli_prepare($koneksi, "DELETE FROM transaksi WHERE id_transaksi = ?");
+                mysqli_stmt_bind_param($stmtDelTrans, "i", $id_transaksi);
+                mysqli_stmt_execute($stmtDelTrans);
+
+                http_response_code(200);
+                echo json_encode(['result' => 'expired and deleted']);
+                exit;
                 break;
         }
 
@@ -54,8 +73,8 @@ try {
             mysqli_stmt_execute($stmtUpdate);
         }
 
-        // Jika status berubah menjadi Dikonfirmasi, kurangi stok barang
-        if ($status_baru === 'dikonfirmasi pembayaran silahkan ambilbarang' && $status_lama !== 'dikonfirmasi pembayaran silahkan ambilbarang') {
+        // Jika status berubah menjadi "dikonfirmasi pembayaran silahkan ambilbarang", kurangi stok
+        if ($status_baru === 'dikonfirmasi pembayaran silahkan ambilbarang' && $status_lama !== $status_baru) {
             $stmtDetail = mysqli_prepare($koneksi, "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?");
             mysqli_stmt_bind_param($stmtDetail, "i", $id_transaksi);
             mysqli_stmt_execute($stmtDetail);
@@ -68,9 +87,8 @@ try {
             }
         }
     }
-    // ==== PENGEMBALIAN ====
+    // Jika tidak ada di transaksi, cek di pengembalian
     else {
-        // Coba cari di pengembalian
         $stmtPengembalian = mysqli_prepare($koneksi, "SELECT * FROM pengembalian WHERE order_id = ? OR snap_token = ?");
         mysqli_stmt_bind_param($stmtPengembalian, "ss", $order_id, $order_id);
         mysqli_stmt_execute($stmtPengembalian);

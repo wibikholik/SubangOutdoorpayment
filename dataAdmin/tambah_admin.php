@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Tambah Data Admin</title>
 
     <!-- Custom fonts for this template -->
@@ -56,7 +56,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
                             <h6 class="m-0 font-weight-bold text-primary">Form Input Admin</h6>
                         </div>
                         <div class="card-body">
-                            <form action="tambah_aksi.php" method="post">
+                            <form action="tambah_aksi.php" method="post" id="formTambahAdmin">
                                 <div class="form-group">
                                     <label for="username">Username</label>
                                     <input type="text" name="username" class="form-control" id="username" required />
@@ -71,7 +71,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
                                 </div>
                                 <div class="form-group">
                                     <label for="no_hp">No HP</label>
-                                    <input type="text" name="no_hp" class="form-control" id="no_hp" required />
+                                    <input type="number" name="no_hp" class="form-control" id="no_hp" pattern="[0-9]+" title="Hanya angka yang diperbolehkan" required />
                                 </div>
                                 <div class="form-group">
                                     <label for="email">Email</label>
@@ -81,7 +81,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
                                     <label for="password">Password</label>
                                     <input type="password" name="password" class="form-control" id="password" minlength="8" required />
                                     <div class="form-check mt-2">
-                                        <input type="checkbox" class="form-check-input" id="showPassword" onclick="togglePassword()">
+                                        <input type="checkbox" class="form-check-input" id="showPassword" onclick="togglePassword()" />
                                         <label class="form-check-label" for="showPassword">Tampilkan Password</label>
                                     </div>
                                     <small class="form-text text-muted">Password minimal 8 karakter.</small>
@@ -123,6 +123,34 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
             const type = passwordInput.type === "password" ? "text" : "password";
             passwordInput.type = type;
         }
+
+        // Validasi tambahan saat submit form
+        document.getElementById("formTambahAdmin").addEventListener("submit", function (e) {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const no_hp = document.getElementById("no_hp").value;
+
+            // Validasi email mengandung @
+            if (!email.includes("@")) {
+                alert("Email harus mengandung karakter '@' dan format yang valid.");
+                e.preventDefault();
+                return;
+            }
+
+            // Validasi panjang password minimal 9 karakter
+            if (password.length < 8) {
+                alert("Password harus lebih dari 8 karakter.");
+                e.preventDefault();
+                return;
+            }
+
+            // Validasi nomor HP hanya angka
+            if (!/^\d+$/.test(no_hp)) {
+                alert("No HP hanya boleh mengandung angka.");
+                e.preventDefault();
+                return;
+            }
+        });
     </script>
 
 </body>

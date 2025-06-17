@@ -94,8 +94,14 @@ $stmt5->close();
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pengembalian - Subang Outdoor</title>
-  <link rel="stylesheet" href="css/bootstrap.css" />
-  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/linearicons.css">
+  <link rel="stylesheet" href="css/owl.carousel.css">
+  <link rel="stylesheet" href="css/font-awesome.min.css">
+  <link rel="stylesheet" href="css/themify-icons.css">
+  <link rel="stylesheet" href="css/nice-select.css">
+  <link rel="stylesheet" href="css/nouislider.min.css">
+  <link rel="stylesheet" href="css/bootstrap.css">
+  <link rel="stylesheet" href="css/main.css">
   <link rel="shortcut icon" href="../../assets/img/logo.jpg" />
 </head>
 <body>
@@ -213,7 +219,14 @@ function validateForm() {
 </script>
 
 <script src="js/vendor/jquery-2.2.4.min.js"></script>
-<script src="js/vendor/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/jquery.ajaxchimp.min.js"></script>
+<script src="js/jquery.nice-select.min.js"></script>
+<script src="js/jquery.sticky.js"></script>
+<script src="js/nouislider.min.js"></script>
+<script src="js/jquery.magnific-popup.min.js"></script>
+<script src="js/owl.carousel.min.js"></script>
+<script src="js/gmaps.min.js"></script>
 <script src="js/main.js"></script>
 </body>
 
