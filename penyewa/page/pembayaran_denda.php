@@ -41,19 +41,19 @@ if (!$data) {
 
 // Load Midtrans Snap library
 require_once '../../vendor/autoload.php';
-
 \Midtrans\Config::$serverKey = 'SB-Mid-server-uoPEq3SC9p0gqrxbhowIBB_I';
 \Midtrans\Config::$isProduction = false;
 \Midtrans\Config::$isSanitized = true;
 \Midtrans\Config::$is3ds = true;
 
-// Buat snap_token hanya jika denda > 0, belum ada snap_token, dan order_id sudah ada
-if (empty($data['snap_token']) && !empty($data['order_id']) && floatval($data['denda']) > 0) {
-    $gross_amount = (int) ceil($data['denda']); // pastikan integer
+// Buat snap_token hanya jika denda > 0 dan belum ada token
+if (floatval($data['denda']) > 0 && empty($data['snap_token'])) {
+    $order_id = 'DENDA-' . $id_pengembalian . '-' . time();
+    $gross_amount = (int) ceil($data['denda']);
 
     $params = [
         'transaction_details' => [
-            'order_id' => $data['order_id'],
+            'order_id' => $order_id,
             'gross_amount' => $gross_amount,
         ],
         'customer_details' => [
@@ -64,21 +64,22 @@ if (empty($data['snap_token']) && !empty($data['order_id']) && floatval($data['d
     try {
         $snapToken = \Midtrans\Snap::getSnapToken($params);
 
-        $stmt_update_snap = mysqli_prepare($koneksi, "UPDATE pengembalian SET snap_token = ?, id_metode = ? WHERE id_pengembalian = ?");
-        $id_metode_online = 4; // contoh id metode bayar online
-        mysqli_stmt_bind_param($stmt_update_snap, 'sii', $snapToken, $id_metode_online, $id_pengembalian);
+        $id_metode_online = 4; // ID metode online
+        $stmt_update_snap = mysqli_prepare($koneksi, "UPDATE pengembalian SET snap_token = ?, order_id = ?, id_metode = ? WHERE id_pengembalian = ?");
+        mysqli_stmt_bind_param($stmt_update_snap, 'ssii', $snapToken, $order_id, $id_metode_online, $id_pengembalian);
         mysqli_stmt_execute($stmt_update_snap);
         mysqli_stmt_close($stmt_update_snap);
 
-        // Update variabel data agar form bisa pakai
         $data['snap_token'] = $snapToken;
+        $data['order_id'] = $order_id;
         $data['id_metode'] = $id_metode_online;
     } catch (Exception $e) {
-        echo "<script>alert('Gagal membuat token Midtrans: " . $e->getMessage() . "');</script>";
+        error_log("Midtrans Error: " . $e->getMessage());
+        echo "<script>alert('Gagal membuat token pembayaran online. Hubungi admin.');</script>";
     }
 }
 
-// Proses konfirmasi bayar langsung
+// Konfirmasi Bayar Langsung
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['metode_bayar']) && $_POST['metode_bayar'] === 'bayar_langsung') {
     $sql_update = "UPDATE pengembalian SET status_pengembalian = 'Menunggu Konfirmasi Pembayaran', snap_token = NULL, order_id = NULL, id_metode = 1 WHERE id_pengembalian = ?";
     $stmt_update = mysqli_prepare($koneksi, $sql_update);
@@ -95,11 +96,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['metode_bayar']) && $_
         echo "<script>alert('Pembayaran langsung dikonfirmasi. Silakan bayar ke toko.'); window.location.href='../page/transaksi.php';</script>";
         exit;
     } else {
-        echo "<script>alert('Gagal mengupdate status pembayaran.');</script>";
+        echo "<script>alert('Gagal menyimpan konfirmasi pembayaran.');</script>";
     }
 }
 
-// Ambil daftar metode pembayaran
+// Ambil metode pembayaran
 $metode_q = mysqli_query($koneksi, "SELECT * FROM metode_pembayaran ORDER BY id_metode");
 $metode_list = [];
 while ($m = mysqli_fetch_assoc($metode_q)) {
@@ -185,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const payButton = document.getElementById('pay-button');
     if (payButton) {
         payButton.addEventListener('click', function () {
+            payButton.disabled = true;
             snap.pay('<?= $data['snap_token']; ?>', {
                 onSuccess: function () {
                     alert('Pembayaran berhasil!');
@@ -196,9 +198,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 onError: function () {
                     alert('Terjadi kesalahan saat pembayaran.');
+                    payButton.disabled = false;
                 },
                 onClose: function () {
                     alert('Anda menutup popup pembayaran.');
+                    payButton.disabled = false;
                 }
             });
         });
