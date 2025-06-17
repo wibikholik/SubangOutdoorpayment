@@ -15,7 +15,7 @@ if ($id_pengembalian <= 0) {
     exit;
 }
 
-// Ambil data pengembalian dan transaksi terkait
+// Ambil data pengembalian
 $sql = "
     SELECT p.*, t.id_transaksi, t.tanggal_sewa, t.tanggal_kembali, t.status AS status_transaksi,
            pe.nama_penyewa,
@@ -39,17 +39,54 @@ if (!$data) {
     exit;
 }
 
+// Load Midtrans Snap library
+require_once '../../vendor/autoload.php';
+
+\Midtrans\Config::$serverKey = 'SB-Mid-server-uoPEq3SC9p0gqrxbhowIBB_I';
+\Midtrans\Config::$isProduction = false;
+\Midtrans\Config::$isSanitized = true;
+\Midtrans\Config::$is3ds = true;
+
+// Buat snap_token hanya jika denda > 0, belum ada snap_token, dan order_id sudah ada
+if (empty($data['snap_token']) && !empty($data['order_id']) && floatval($data['denda']) > 0) {
+    $gross_amount = (int) ceil($data['denda']); // pastikan integer
+
+    $params = [
+        'transaction_details' => [
+            'order_id' => $data['order_id'],
+            'gross_amount' => $gross_amount,
+        ],
+        'customer_details' => [
+            'first_name' => $data['nama_penyewa'],
+        ],
+    ];
+
+    try {
+        $snapToken = \Midtrans\Snap::getSnapToken($params);
+
+        $stmt_update_snap = mysqli_prepare($koneksi, "UPDATE pengembalian SET snap_token = ?, id_metode = ? WHERE id_pengembalian = ?");
+        $id_metode_online = 4; // contoh id metode bayar online
+        mysqli_stmt_bind_param($stmt_update_snap, 'sii', $snapToken, $id_metode_online, $id_pengembalian);
+        mysqli_stmt_execute($stmt_update_snap);
+        mysqli_stmt_close($stmt_update_snap);
+
+        // Update variabel data agar form bisa pakai
+        $data['snap_token'] = $snapToken;
+        $data['id_metode'] = $id_metode_online;
+    } catch (Exception $e) {
+        echo "<script>alert('Gagal membuat token Midtrans: " . $e->getMessage() . "');</script>";
+    }
+}
+
 // Proses konfirmasi bayar langsung
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['metode_bayar']) && $_POST['metode_bayar'] === 'bayar_langsung') {
-    // Update status pengembalian
-    $sql_update_pengembalian = "UPDATE pengembalian SET status_pengembalian = 'Menunggu Konfirmasi Pembayaran', snap_token = NULL WHERE id_pengembalian = ? AND id_transaksi = ?";
-    $stmt_update_pengembalian = mysqli_prepare($koneksi, $sql_update_pengembalian);
-    mysqli_stmt_bind_param($stmt_update_pengembalian, "ii", $id_pengembalian, $data['id_transaksi']);
-    $execute_pengembalian = mysqli_stmt_execute($stmt_update_pengembalian);
+    $sql_update = "UPDATE pengembalian SET status_pengembalian = 'Menunggu Konfirmasi Pembayaran', snap_token = NULL, order_id = NULL, id_metode = 1 WHERE id_pengembalian = ?";
+    $stmt_update = mysqli_prepare($koneksi, $sql_update);
+    mysqli_stmt_bind_param($stmt_update, "i", $id_pengembalian);
+    $success = mysqli_stmt_execute($stmt_update);
 
-    if ($execute_pengembalian) {
-        // Update status transaksi
-        $status_transaksi_baru = 'Menunggu Konfirmasi Pembayaran Denda'; // Atur sesuai alur kamu
+    if ($success) {
+        $status_transaksi_baru = 'Menunggu Konfirmasi Pembayaran Denda';
         $sql_update_transaksi = "UPDATE transaksi SET status = ? WHERE id_transaksi = ?";
         $stmt_update_transaksi = mysqli_prepare($koneksi, $sql_update_transaksi);
         mysqli_stmt_bind_param($stmt_update_transaksi, "si", $status_transaksi_baru, $data['id_transaksi']);
@@ -62,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['metode_bayar']) && $_
     }
 }
 
-// Ambil metode pembayaran
+// Ambil daftar metode pembayaran
 $metode_q = mysqli_query($koneksi, "SELECT * FROM metode_pembayaran ORDER BY id_metode");
 $metode_list = [];
 while ($m = mysqli_fetch_assoc($metode_q)) {
@@ -76,45 +113,12 @@ while ($m = mysqli_fetch_assoc($metode_q)) {
     <meta charset="UTF-8" />
     <title>Pembayaran Denda #<?= htmlspecialchars($id_pengembalian) ?></title>
     <link rel="stylesheet" href="css/bootstrap.css">
-    <link rel="stylesheet" href="css/main.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-3qUv-F-EtozaPD5I"></script>
-    <style>
-        ul.list li {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-        }
-        .primary-btn {
-            background-color: #2d89ef;
-            color: white;
-            padding: 12px 20px;
-            font-size: 1.1em;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .primary-btn:hover {
-            background-color: #1b5fbd;
-        }
-    </style>
 </head>
 <body>
 
 <?php include('../layout/navbar1.php') ?>
-
-<section class="banner-area organic-breadcrumb">
-    <div class="container">
-        <div class="breadcrumb-banner d-flex flex-wrap align-items-center justify-content-end">
-            <div class="col-first">
-                <h1>Subang Outdoor</h1>
-                <nav class="d-flex align-items-center">
-                    <a href="#">Pembayaran Denda</a>
-                </nav>
-            </div>
-        </div>
-    </div>
-</section>
 
 <section class="checkout_area section_gap">
     <div class="container-fluid">
@@ -142,24 +146,22 @@ while ($m = mysqli_fetch_assoc($metode_q)) {
                                            value="<?= strtolower(str_replace(' ', '_', $metode['nama_metode'])); ?>"
                                            <?= $metode['nama_metode'] === 'Bayar Online' ? 'checked' : ''; ?>>
                                     <label class="form-check-label" for="metode<?= $metode['id_metode']; ?>">
-                                        <?= htmlspecialchars($metode['nama_metode']); ?> (<?= htmlspecialchars($metode['atas_nama']); ?>)
+                                        <?= htmlspecialchars($metode['nama_metode']); ?>
                                     </label>
                                 </div>
                             <?php endforeach; ?>
 
-                            <div id="bayar-online" class="mt-4">
+                            <div id="bayar-online" class="mt-4" <?= empty($data['snap_token']) ? 'style="display:none;"' : ''; ?>>
                                 <?php if (empty($data['snap_token'])): ?>
                                     <div class="alert alert-danger">Token pembayaran belum tersedia. Hubungi admin.</div>
                                 <?php else: ?>
-                                    <button class="primary-btn w-100" type="button" id="pay-button">Bayar Sekarang (Online)</button>
+                                    <button class="btn btn-primary w-100" type="button" id="pay-button">Bayar Sekarang (Online)</button>
                                 <?php endif; ?>
                             </div>
 
                             <div id="bayar-langsung" class="mt-4" style="display: none;">
-                                <div class="alert alert-info">
-                                    Silakan bayar langsung ke toko setelah konfirmasi ini.
-                                </div>
-                                <button class="primary-btn w-100" type="submit">Konfirmasi Bayar Langsung</button>
+                                <div class="alert alert-info">Silakan bayar langsung ke toko setelah konfirmasi ini.</div>
+                                <button class="btn btn-success w-100" type="submit">Konfirmasi Bayar Langsung</button>
                             </div>
                         </form>
                     </div>
@@ -183,18 +185,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const payButton = document.getElementById('pay-button');
     if (payButton) {
         payButton.addEventListener('click', function () {
-            const metode = document.querySelector('input[name="metode_bayar"]:checked')?.value;
-
-            if (metode !== 'bayar_online') return;
-
             snap.pay('<?= $data['snap_token']; ?>', {
                 onSuccess: function () {
                     alert('Pembayaran berhasil!');
-                    window.location.href = '../page/transaksi.php';
+                    window.location.href = 'transaksi.php';
                 },
                 onPending: function () {
                     alert('Pembayaran sedang diproses.');
-                    window.location.href = '../page/transaksi.php';
+                    window.location.href = 'transaksi.php';
                 },
                 onError: function () {
                     alert('Terjadi kesalahan saat pembayaran.');
@@ -208,9 +206,5 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<?php include("../layout/footer.php"); ?>
-<script src="js/vendor/jquery-2.2.4.min.js"></script>
-<script src="js/vendor/bootstrap.min.js"></script>
-<script src="js/main.js"></script>
 </body>
 </html>

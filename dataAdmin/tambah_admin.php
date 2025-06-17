@@ -79,7 +79,12 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
                                 </div>
                                 <div class="form-group">
                                     <label for="password">Password</label>
-                                    <input type="password" name="password" class="form-control" id="password" required />
+                                    <input type="password" name="password" class="form-control" id="password" minlength="8" required />
+                                    <div class="form-check mt-2">
+                                        <input type="checkbox" class="form-check-input" id="showPassword" onclick="togglePassword()">
+                                        <label class="form-check-label" for="showPassword">Tampilkan Password</label>
+                                    </div>
+                                    <small class="form-text text-muted">Password minimal 8 karakter.</small>
                                 </div>
                                 <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan</button>
                             </form>
@@ -98,7 +103,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
     </div>
     <!-- End of Page Wrapper -->
 
-    <!-- Scroll to Top Button -->
+    <!-- Scroll to Top Button-->
     <a class="scroll-to-top rounded" href="#page-top"><i class="fas fa-angle-up"></i></a>
 
     <!-- Bootstrap core JavaScript -->
@@ -110,6 +115,15 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
 
     <!-- Custom scripts for all pages -->
     <script src="../assets/js/sb-admin-2.min.js"></script>
+
+    <!-- Show Password Script -->
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById("password");
+            const type = passwordInput.type === "password" ? "text" : "password";
+            passwordInput.type = type;
+        }
+    </script>
 
 </body>
 </html>

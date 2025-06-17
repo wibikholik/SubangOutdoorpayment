@@ -148,7 +148,7 @@ $result_transaksi = $stmt->get_result();
               <?php endif; ?>
 
               <?php
-              if (strcasecmp($status, 'Menunggu pembayaran denda') === 0) {
+              if (strcasecmp($status, 'Ditolak Pengembalian') === 0) {
                   $query_denda = "
                     SELECT id_pengembalian, denda, snap_token 
                     FROM pengembalian 
@@ -173,13 +173,12 @@ $result_transaksi = $stmt->get_result();
 
                           if ($denda > 0 && $snap_token_denda && $id_pengembalian) {
                               ?>
-                              <form action="pembayaran_denda.php" method="GET" class="d-inline">
-                                  <input type="hidden" name="id_pengembalian" value="<?= htmlspecialchars($id_pengembalian); ?>">
-                                  <input type="hidden" name="token" value="<?= htmlspecialchars($snap_token_denda); ?>">
-                                  <button type="submit" class="btn btn-sm btn-danger ms-2">
-                                      Bayar Denda: Rp<?= number_format($denda, 0, ',', '.'); ?>
-                                  </button>
-                              </form>
+                             <form action="pembayaran_denda.php" method="GET" class="d-inline">
+                              <input type="hidden" name="id_pengembalian" value="<?= htmlspecialchars($id_pengembalian); ?>">
+                              <button type="submit" class="btn btn-sm btn-danger ms-2">
+                                  Bayar Denda: Rp<?= number_format($denda, 0, ',', '.'); ?>
+                              </button>
+                          </form>
                               <?php
                           } else {
                               echo '<span class="text-danger ms-2">Token pembayaran denda belum tersedia.</span>';

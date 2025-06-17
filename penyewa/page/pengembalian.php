@@ -175,12 +175,12 @@ $stmt5->close();
             </td>
             <td>
               <input type="hidden" name="id_checklist[]" value="<?= $item['id_checklist'] ?>">
-              <select name="status_akhir[]" class="form-select" required>
-                <option value="">-- Pilih Status --</option>
-                <option value="ada" <?= ($item['status_akhir'] == 'ada') ? 'selected' : '' ?>>Ada</option>
-                <option value="hilang" <?= ($item['status_akhir'] == 'hilang') ? 'selected' : '' ?>>Hilang</option>
-                <option value="rusak" <?= ($item['status_akhir'] == 'rusak') ? 'selected' : '' ?>>Rusak</option>
-              </select>
+             <select name="status_akhir[]" class="form-select" required>
+              <option value="">-- Pilih Status --</option>
+              <option value="ada" <?= ($item['status_akhir'] == 'ada') ? 'selected' : '' ?>>Ada</option>
+              <option value="tidak ada" <?= ($item['status_akhir'] == 'tidak ada') ? 'selected' : '' ?>>Tidak Ada</option>
+          </select>
+
             </td>
             <td>
               <input type="text" name="keterangan_akhir[]" class="form-control" placeholder="Opsional" value="<?= htmlspecialchars($item['keterangan_akhir']) ?>">
