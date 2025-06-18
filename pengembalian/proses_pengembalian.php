@@ -20,7 +20,7 @@ $catatan = trim($_POST['catatan'] ?? '');
 $status_valid = ['Selesai Dikembalikan', 'Ditolak Pengembalian'];
 if (!$id_pengembalian || !in_array($status_baru, $status_valid)) {
     header("Location: pengembalian.php?error=invalid_input");
-    exit;
+    exit; 
 }
 
 $q = mysqli_query($koneksi, "SELECT * FROM pengembalian WHERE id_pengembalian = $id_pengembalian");
@@ -33,9 +33,10 @@ if (!$data_pengembalian) {
     exit;
 }
 $id_transaksi = $data_pengembalian['id_transaksi'];
-
-// Jika denda > 0 dan order_id kosong, buat order_id baru
 $order_id = $data_pengembalian['order_id'];
+$snap_token = $data_pengembalian['snap_token'];
+
+// Buat order_id baru jika belum ada
 if ($denda > 0 && empty($order_id)) {
     $prefix = 'DND-' . date('Ymd') . '-';
     $qMax = mysqli_query($koneksi, "SELECT MAX(order_id) AS max_id FROM pengembalian WHERE order_id LIKE '$prefix%'");
@@ -47,7 +48,7 @@ if ($denda > 0 && empty($order_id)) {
     $order_id = $prefix . str_pad($last_number, 4, '0', STR_PAD_LEFT);
 }
 
-// Update pengembalian
+// Update data pengembalian
 if (!empty($order_id)) {
     $stmt = mysqli_prepare($koneksi, "UPDATE pengembalian SET status_pengembalian = ?, denda = ?, catatan = ?, order_id = ? WHERE id_pengembalian = ?");
     mysqli_stmt_bind_param($stmt, 'sdssi', $status_baru, $denda, $catatan, $order_id, $id_pengembalian);
@@ -58,8 +59,8 @@ if (!empty($order_id)) {
 mysqli_stmt_execute($stmt);
 mysqli_stmt_close($stmt);
 
-// Snap Token hanya dibuat jika denda > 0
-if ($denda > 0) {
+// Snap Token hanya dibuat jika denda > 0 dan snap_token masih kosong
+if ($denda > 0 && empty($snap_token)) {
     require_once __DIR__ . '/../vendor/autoload.php';
 
     \Midtrans\Config::$serverKey = 'SB-Mid-server-uoPEq3SC9p0gqrxbhowIBB_I';
@@ -92,12 +93,12 @@ if ($denda > 0) {
         mysqli_query($koneksi, "UPDATE pengembalian SET snap_token = '$snapToken' WHERE id_pengembalian = $id_pengembalian");
     } catch (Exception $e) {
         error_log("Gagal generate SnapToken: " . $e->getMessage());
-        // Debug opsional
-        // echo "Gagal buat token: " . $e->getMessage(); exit;
+        echo "Gagal buat token: " . $e->getMessage();
+        exit;
     }
 }
 
-// Update stok jika selesai
+// Update stok jika selesai dikembalikan
 if ($status_baru === 'Selesai Dikembalikan') {
     $qDetail = mysqli_query($koneksi, "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = $id_transaksi");
     while ($row = mysqli_fetch_assoc($qDetail)) {
@@ -118,5 +119,5 @@ if (mysqli_num_rows($cekBayar) > 0) {
     mysqli_query($koneksi, "UPDATE pembayaran SET status_pembayaran = '$status_baru' WHERE id_pembayaran = $id_pembayaran");
 }
 
-header("Location: detail_pengembalian.php?id_pengembalian=$id_pengembalian&status=berhasil");
+header("Location: pengembalian.php?id_pengembalian=$id_pengembalian&status=berhasil");
 exit;

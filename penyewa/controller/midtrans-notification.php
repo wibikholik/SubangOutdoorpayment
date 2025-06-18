@@ -102,7 +102,7 @@ try {
 
             if ($transaction_status === 'settlement') {
                 $stmt = mysqli_prepare($koneksi, "UPDATE pengembalian SET status_pengembalian = 'Diterima' WHERE id_pengembalian = ?");
-                mysqli_stmt_bind_param($stmt, "i", $id_pengembalian);
+                mysqli_stmt_bind_param($stmt,  "i", $id_pengembalian);
                 mysqli_stmt_execute($stmt);
 
                 $stmt = mysqli_prepare($koneksi, "UPDATE transaksi SET status = 'Selesai Dikembalikan' WHERE id_transaksi = ?");
