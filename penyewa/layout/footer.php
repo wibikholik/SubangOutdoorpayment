@@ -48,7 +48,7 @@
 		<h6 class="mb-20">Location</h6>
 		<div class="map-responsive">
 			<iframe 
-				src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.2448268497484!2d107.760497!3d-6.981991!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68d5b327c165c3%3A0x8e8f8c3d4b949e31!2sSubang%2C%20Jawa%20Barat!5e0!3m2!1sid!2sid!4v1625391332572!5m2!1sid!2sid" 
+				src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3767.256501799453!2d107.73463187475404!3d-6.6020729933918245!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6923fa15646aa7%3A0x12c3735fa315d694!2sSewa%20Alat%20Camping%20Subang!5e1!3m2!1sid!2sid!4v1750313143673!5m2!1sid!2sid"
 				width="100%" 
 				height="200" 
 				style="border:0;" 
