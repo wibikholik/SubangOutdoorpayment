@@ -34,7 +34,7 @@ try {
                 $status_baru = ($fraud_status === 'challenge') ? 'Menunggu Konfirmasi Pembayaran' : 'Dikonfirmasi';
                 break;
             case 'settlement':
-                $status_baru = 'dikonfirmasi pembayaran silahkan ambilbarang';
+                $status_baru = 'Dikonfirmasi Pembayaran Silahkan AmbilBarang';
                 break;
             case 'pending':
                 $status_baru = 'Menunggu Pembayaran';
@@ -74,7 +74,7 @@ try {
         }
 
         // Jika status berubah menjadi "dikonfirmasi pembayaran silahkan ambilbarang", kurangi stok
-        if ($status_baru === 'dikonfirmasi pembayaran silahkan ambilbarang' && $status_lama !== $status_baru) {
+        if ($status_baru === 'Dikonfirmasi Pembayaran Silahkan AmbilBarang' && $status_lama !== $status_baru) {
             $stmtDetail = mysqli_prepare($koneksi, "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?");
             mysqli_stmt_bind_param($stmtDetail, "i", $id_transaksi);
             mysqli_stmt_execute($stmtDetail);

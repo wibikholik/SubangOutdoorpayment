@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Jika status: Dikonfirmasi → kurangi stok + kirim email
-        if (strtolower($status_baru) === strtolower('Dikonfirmasi Pembayaran Silahkan AmbilBarang')) {
+        if (strtolower($status_baru) === strtolower('dikonfirmasi pembayaran silahkan ambilbarang')) {
             $query_items = "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?";
             $stmt_items = $koneksi->prepare($query_items);
             $stmt_items->bind_param("i", $id);

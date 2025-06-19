@@ -29,10 +29,27 @@ if (isset($_GET['msg'])) {
         $message = "Gagal memproses pengembalian.";
     }
 }
+
+function getBadgeClass($status) {
+    switch (strtolower($status)) {
+        case 'selesai':
+        case 'lunas':
+            return 'success';
+        case 'menunggu konfirmasi pembayaran':
+        case 'menunggu konfirmasi pembayaran denda':
+        case 'menunggu konfirmasi pengembalian':
+            return 'warning';
+        case 'ditolak pembayaran':
+        case 'ditolak pengembalian':
+            return 'danger';
+        default:
+            return 'secondary';
+    }
+}
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="utf-8">
     <title>Data Pengembalian - Admin</title>
@@ -57,7 +74,7 @@ if (isset($_GET['msg'])) {
 
                 <?php if (!empty($message)): ?>
                     <div class="alert alert-info alert-dismissible fade show" role="alert">
-                        <?= $message ?>
+                        <?= htmlspecialchars($message) ?>
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -77,6 +94,7 @@ if (isset($_GET['msg'])) {
                                         <th>Tgl Pengembalian</th>
                                         <th>Status</th>
                                         <th>Denda</th>
+                                        <th>Bukti Pembayaran</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
@@ -85,18 +103,34 @@ if (isset($_GET['msg'])) {
                                         <tr>
                                             <td><?= $row['id_pengembalian'] ?></td>
                                             <td><?= htmlspecialchars($row['nama_penyewa']) ?></td>
-                                            <td><?= date('d-m-Y', strtotime($row['tanggal_sewa'])) ?></td>
-                                            <td><?= date('d-m-Y', strtotime($row['tanggal_kembali'])) ?></td>
-                                            <td><?= date('d-m-Y H:i', strtotime($row['tanggal_pengembalian'])) ?></td>
-                                            <td><span class="badge badge-<?= $row['status_pengembalian'] === 'Selesai' ? 'success' : 'warning' ?>"><?= $row['status_pengembalian'] ?? '-' ?></span></td>
+                                            <td><?= !empty($row['tanggal_sewa']) ? date('d-m-Y', strtotime($row['tanggal_sewa'])) : '-' ?></td>
+                                            <td><?= !empty($row['tanggal_kembali']) ? date('d-m-Y', strtotime($row['tanggal_kembali'])) : '-' ?></td>
+                                            <td><?= !empty($row['tanggal_pengembalian']) ? date('d-m-Y H:i', strtotime($row['tanggal_pengembalian'])) : '-' ?></td>
+                                            <td>
+                                                <span class="badge badge-<?= getBadgeClass($row['status_pengembalian']) ?>">
+                                                    <?= htmlspecialchars($row['status_pengembalian'] ?? '-') ?>
+                                                </span>
+                                            </td>
                                             <td>Rp<?= number_format($row['denda'] ?? 0, 0, ',', '.') ?></td>
-                                           <td>
-                                            <a href="detail_pengembalian.php?id_pengembalian=<?= $row['id_pengembalian'] ?>" class="btn btn-info btn-sm">Detail</a>
-                                            <a href="delete_pengembalian.php?id_pengembalian=<?= $row['id_pengembalian'] ?>" 
-                                                class="btn btn-danger btn-sm" 
-                                                onclick="return confirm('Yakin ingin menghapus data ini?');">
-                                                Hapus
-                                            </a>
+                                            <td>
+                                                <?php if (!empty($row['bukti_pembayaran'])): ?>
+                                                    <button class="btn btn-sm btn-primary btn-bukti" 
+                                                        data-toggle="modal" 
+                                                        data-target="#modalBukti" 
+                                                        data-bukti="<?= htmlspecialchars($row['bukti_pembayaran']) ?>">
+                                                        <i class="fas fa-file-image"></i> Lihat Bukti
+                                                    </button>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <a href="detail_pengembalian.php?id_pengembalian=<?= $row['id_pengembalian'] ?>" class="btn btn-info btn-sm">Detail</a>
+                                                <a href="delete_pengembalian.php?id_pengembalian=<?= $row['id_pengembalian'] ?>" 
+                                                   class="btn btn-danger btn-sm" 
+                                                   onclick="return confirm('Yakin ingin menghapus data ini?');">
+                                                    Hapus
+                                                </a>
                                             </td>
                                         </tr>
                                     <?php endwhile; ?>
@@ -111,6 +145,23 @@ if (isset($_GET['msg'])) {
     </div>
 </div>
 
+<!-- Modal Bukti Pembayaran -->
+<div class="modal fade" id="modalBukti" tabindex="-1" role="dialog" aria-labelledby="modalBuktiLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:600px;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalBuktiLabel">Bukti Pembayaran</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-center" id="modalBuktiBody" style="min-height:200px;">
+        <!-- Gambar bukti akan dimasukkan di sini -->
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="../assets/vendor/jquery/jquery.min.js"></script>
 <script src="../assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="../assets/vendor/jquery-easing/jquery.easing.min.js"></script>
@@ -121,6 +172,26 @@ if (isset($_GET['msg'])) {
     $(document).ready(function() {
         $('#dataTable').DataTable({
             "order": [[0, "desc"]]
+        });
+
+        // Event klik tombol lihat bukti
+        $('.btn-bukti').on('click', function() {
+            const bukti = $(this).data('bukti');
+            const modalBody = $('#modalBuktiBody');
+
+            // Cek ekstensi file
+            const ext = bukti.split('.').pop().toLowerCase();
+
+            // Reset modal body
+            modalBody.html('');
+
+            if (['jpg','jpeg','png','gif'].includes(ext)) {
+                modalBody.html(`<img src='../uploads/bukti_pembayaran/${bukti}' alt='Bukti Pembayaran' style='max-width:100%; height:auto; border:1px solid #ddd; padding:5px;'>`);
+            } else if (ext === 'pdf') {
+                modalBody.html(`<embed src='../uploads/bukti_pembayaran/${bukti}' type='application/pdf' width='100%' height='400px' />`);
+            } else {
+                modalBody.text('Tidak dapat menampilkan file ini.');
+            }
         });
     });
 </script>

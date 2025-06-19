@@ -149,6 +149,8 @@ $allowed_status_updates = [
                                         <td><?= htmlspecialchars($transaksi['tanggal_kembali']); ?></td>
                                         <td><?= htmlspecialchars($transaksi['nama_metode']); ?></td>
                                         <td>
+                                             
+    
                                             <?php if (array_key_exists($status, array_change_key_case($allowed_status_updates, CASE_LOWER))): ?>
                                                 <form method="POST" action="update_status.php" class="mb-2">
                                                     <input type="hidden" name="id" value="<?= $transaksi['id_transaksi']; ?>">
@@ -163,7 +165,17 @@ $allowed_status_updates = [
                                             <?php else: ?>
                                                 <small class="text-muted">Status tidak dapat diubah</small>
                                             <?php endif; ?>
-
+                                            <?php if ($status === 'dikonfirmasi pembayaran silahkan ambilbarang' || $status === 'dikonfirmasi (silahkan ambil barang)'): ?>
+        <a href="tambah_cheklistawal.php?id_transaksi=<?= $transaksi['id_transaksi']; ?>" 
+           class="btn btn-success btn-sm mb-2 w-100" title="Checklist Kondisi Awal">
+           <i class="fas fa-clipboard-check"></i> Checklist Awal
+        </a>
+    <?php endif; ?>
+ <?php if (in_array($status, ['disewa', 'terlambat dikembalikan'])): ?>
+        <a href="pengembalian.php?id_transaksi=<?= $transaksi['id_transaksi']; ?>" class="btn btn-warning btn-sm mb-1 w-100">
+            <i class="fas fa-undo"></i> Pengembalian
+        </a>
+    <?php endif; ?>
                                             <form method="POST" action="hapus.php" onsubmit="return confirm('Yakin ingin menghapus transaksi ini?')">
                                                 <input type="hidden" name="id_transaksi" value="<?= $transaksi['id_transaksi']; ?>">
                                                 <button type="submit" class="btn btn-danger btn-sm w-100">Hapus</button>

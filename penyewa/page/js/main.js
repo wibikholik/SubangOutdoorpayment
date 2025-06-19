@@ -1,26 +1,23 @@
-
 $(document).ready(function(){
-	"use strict";
+    "use strict";
 
-	var window_width 	 = $(window).width(),
-	window_height 		 = window.innerHeight,
-	header_height 		 = $(".default-header").height(),
-	header_height_static = $(".site-header.static").outerHeight(),
-	fitscreen 			 = window_height - header_height;
+    var window_width     = $(window).width(),
+    window_height         = window.innerHeight,
+    header_height         = $(".default-header").height(),
+    header_height_static = $(".site-header.static").outerHeight(),
+    fitscreen             = window_height - header_height;
 
-
-	$(".fullscreen").css("height", window_height)
+    $(".fullscreen").css("height", window_height)
     $(".fitscreen").css("height", fitscreen);
 
-  //------- Active Nice Select --------//
-
-    $('select').niceSelect();
-
+    //------- Active Nice Select --------//
+    // Modifikasi: exclude select dengan class .no-nice-select supaya tidak di-init di sini
+    $('select').not('.no-nice-select').niceSelect();
 
     $('.navbar-nav li.dropdown').hover(function() {
-    $(this).find('.dropdown-menu').stop(true, true).delay(200).fadeIn(500);
+        $(this).find('.dropdown-menu').stop(true, true).delay(200).fadeIn(500);
     }, function() {
-    $(this).find('.dropdown-menu').stop(true, true).delay(200).fadeOut(500);
+        $(this).find('.dropdown-menu').stop(true, true).delay(200).fadeOut(500);
     });
 
     $('.img-pop-up').magnificPopup({
@@ -41,9 +38,9 @@ $(document).ready(function(){
     });
 
     /*==========================
-		javaScript for sticky header
-		============================*/
-			$(".sticky-header").sticky();
+        javaScript for sticky header
+        ============================*/
+    $(".sticky-header").sticky();
 
     /*=================================
     Javascript for banner area carousel
@@ -104,8 +101,8 @@ $(document).ready(function(){
         $(this).parent().find(".lnr-arrow-left").removeClass("lnr-arrow-left").addClass("lnr-arrow-right");
     });
 
-  // Select all links with hashes
-  $('.main-menubar a[href*="#"]')
+    // Select all links with hashes
+    $('.main-menubar a[href*="#"]')
     // Remove links that don't actually link to anything
     .not('[href="#"]')
     .not('[href="#0"]')
@@ -141,51 +138,42 @@ $(document).ready(function(){
       }
     });
 
+    // -------   Mail Send ajax
+    $(document).ready(function() {
+        var form = $('#booking'); // contact form
+        var submit = $('.submit-btn'); // submit button
+        var alert = $('.alert-msg'); // alert div for show alert message
 
+        // form submit event
+        form.on('submit', function(e) {
+            e.preventDefault(); // prevent default form submit
 
-      // -------   Mail Send ajax
-
-         $(document).ready(function() {
-            var form = $('#booking'); // contact form
-            var submit = $('.submit-btn'); // submit button
-            var alert = $('.alert-msg'); // alert div for show alert message
-
-            // form submit event
-            form.on('submit', function(e) {
-                e.preventDefault(); // prevent default form submit
-
-                $.ajax({
-                    url: 'booking.php', // form action url
-                    type: 'POST', // form submit method get/post
-                    dataType: 'html', // request type html/json/xml
-                    data: form.serialize(), // serialize form data
-                    beforeSend: function() {
-                        alert.fadeOut();
-                        submit.html('Sending....'); // change submit button text
-                    },
-                    success: function(data) {
-                        alert.html(data).fadeIn(); // fade in response data
-                        form.trigger('reset'); // reset form
-                        submit.attr("style", "display: none !important");; // reset submit button text
-                    },
-                    error: function(e) {
-                        console.log(e)
-                    }
-                });
+            $.ajax({
+                url: 'booking.php', // form action url
+                type: 'POST', // form submit method get/post
+                dataType: 'html', // request type html/json/xml
+                data: form.serialize(), // serialize form data
+                beforeSend: function() {
+                    alert.fadeOut();
+                    submit.html('Sending....'); // change submit button text
+                },
+                success: function(data) {
+                    alert.html(data).fadeIn(); // fade in response data
+                    form.trigger('reset'); // reset form
+                    submit.attr("style", "display: none !important");; // reset submit button text
+                },
+                error: function(e) {
+                    console.log(e)
+                }
             });
         });
-
-
-
+    });
 
     $(document).ready(function() {
         $('#mc_embed_signup').find('form').ajaxChimp();
     });   
 
-
-
-     if(document.getElementById("js-countdown")){
-
+    if(document.getElementById("js-countdown")){
         var countdown = new Date("October 17, 2018");
 
         function getRemainingTime(endtime) {
@@ -195,12 +183,12 @@ $(document).ready(function(){
             var hours = Math.floor(milliseconds / (1000 * 60 * 60) % 24);
             var days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
 
-        return {
-            'total': milliseconds,
-            'seconds': seconds,
-            'minutes': minutes,
-            'hours': hours,
-            'days': days
+            return {
+                'total': milliseconds,
+                'seconds': seconds,
+                'minutes': minutes,
+                'hours': hours,
+                'days': days
             };
         }
 
@@ -211,17 +199,17 @@ $(document).ready(function(){
             var minutesItem = counter.querySelector('.js-countdown-minutes');
             var secondsItem = counter.querySelector('.js-countdown-seconds');
 
-        function updateClock() {
-            var time = getRemainingTime(endtime);
+            function updateClock() {
+                var time = getRemainingTime(endtime);
 
-            daysItem.innerHTML = time.days;
-            hoursItem.innerHTML = ('0' + time.hours).slice(-2);
-            minutesItem.innerHTML = ('0' + time.minutes).slice(-2);
-            secondsItem.innerHTML = ('0' + time.seconds).slice(-2);
+                daysItem.innerHTML = time.days;
+                hoursItem.innerHTML = ('0' + time.hours).slice(-2);
+                minutesItem.innerHTML = ('0' + time.minutes).slice(-2);
+                secondsItem.innerHTML = ('0' + time.seconds).slice(-2);
 
-            if (time.total <= 0) {
-              clearInterval(timeinterval);
-            }
+                if (time.total <= 0) {
+                  clearInterval(timeinterval);
+                }
             }
 
             updateClock();
@@ -229,62 +217,42 @@ $(document).ready(function(){
         }
 
         initClock('js-countdown', countdown);
+    };
 
-  };
-
-
-
-      $('.quick-view-carousel-details').owlCarousel({
-          loop: true,
-          dots: true,
-          items: 1,
-      })
-
-
-
-    //----- Active No ui slider --------//
-
-
-
-    $(function(){
-
-        if(document.getElementById("price-range")){
-        
-        var nonLinearSlider = document.getElementById('price-range');
-        
-        noUiSlider.create(nonLinearSlider, {
-            connect: true,
-            behaviour: 'tap',
-            start: [ 500, 4000 ],
-            range: {
-                // Starting at 500, step the value by 500,
-                // until 4000 is reached. From there, step by 1000.
-                'min': [ 0 ],
-                '10%': [ 500, 500 ],
-                '50%': [ 4000, 1000 ],
-                'max': [ 10000 ]
-            }
-        });
-
-
-        var nodes = [
-            document.getElementById('lower-value'), // 0
-            document.getElementById('upper-value')  // 1
-        ];
-
-        // Display the slider value and how far the handle moved
-        // from the left edge of the slider.
-        nonLinearSlider.noUiSlider.on('update', function ( values, handle, unencoded, isTap, positions ) {
-            nodes[handle].innerHTML = values[handle];
-        });
-
-        }
-
+    $('.quick-view-carousel-details').owlCarousel({
+        loop: true,
+        dots: true,
+        items: 1,
     });
 
-    
-    //-------- Have Cupon Button Text Toggle Change -------//
+    //----- Active No ui slider --------//
+    $(function(){
+        if(document.getElementById("price-range")){
+            var nonLinearSlider = document.getElementById('price-range');
+            noUiSlider.create(nonLinearSlider, {
+                connect: true,
+                behaviour: 'tap',
+                start: [ 500, 4000 ],
+                range: {
+                    'min': [ 0 ],
+                    '10%': [ 500, 500 ],
+                    '50%': [ 4000, 1000 ],
+                    'max': [ 10000 ]
+                }
+            });
 
+            var nodes = [
+                document.getElementById('lower-value'), // 0
+                document.getElementById('upper-value')  // 1
+            ];
+
+            nonLinearSlider.noUiSlider.on('update', function ( values, handle, unencoded, isTap, positions ) {
+                nodes[handle].innerHTML = values[handle];
+            });
+        }
+    });
+
+    //-------- Have Cupon Button Text Toggle Change -------//
     $('.have-btn').on('click', function(e){
         e.preventDefault();
         $('.have-btn span').text(function(i, text){
@@ -298,16 +266,8 @@ $(document).ready(function(){
         $('.load-product').fadeIn('slow');
         $(this).fadeOut();
     });
-    
 
-
-
-
-  //------- Start Quantity Increase & Decrease Value --------//
-
-
-
-
+    //------- Start Quantity Increase & Decrease Value --------//
     var value,
         quantity = document.getElementsByClassName('quantity-container');
 
@@ -344,12 +304,12 @@ $(document).ready(function(){
         quantityAmount.value = value;
     }
 
-  init();
+    init();
 
-//------- End Quantity Increase & Decrease Value --------//
+    //------- End Quantity Increase & Decrease Value --------//
 
-  /*----------------------------------------------------*/
-  /*  Google map js
+    /*----------------------------------------------------*/
+    /*  Google map js
     /*----------------------------------------------------*/
 
     if ($("#mapBox").length) {
@@ -558,8 +518,4 @@ $(document).ready(function(){
           ]
         });
       }
-
-
-  
-
- });
+});

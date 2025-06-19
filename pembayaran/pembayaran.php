@@ -89,7 +89,8 @@ if (isset($_SESSION['notification'])) {
                                         <th>Total</th>
                                         <th>Bukti</th>
                                         <th>Status</th>
-                                        <th style="width: 120px;">Aksi</th> </tr>
+                                        <th style="width: 150px;">Aksi</th> 
+                                    </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($pembayaranList as $row): ?>
@@ -131,13 +132,22 @@ if (isset($_SESSION['notification'])) {
                                             </span>
                                         </td>
                                         <td>
-                                            <?php if (strtolower($row['status_pembayaran']) == 'menunggu konfirmasi pembayaran'): ?>
-                                                <a href="update_status.php?id=<?= $row['id_pembayaran'] ?>&status=dikonfirmasi" class="btn btn-sm btn-success" data-toggle="tooltip" title="Konfirmasi Pembayaran">
-                                                    <i class="fas fa-check"></i>
-                                                </a>
-                                                <a href="update_status.php?id=<?= $row['id_pembayaran'] ?>&status=ditolak" class="btn btn-sm btn-warning" data-toggle="tooltip" title="Tolak Pembayaran">
-                                                    <i class="fas fa-times"></i>
-                                                </a>
+                                            <?php if ($status == 'menunggu konfirmasi pembayaran'): ?>
+                                                <form action="update_status.php" method="POST" style="display:inline-block;" onsubmit="return confirm('Konfirmasi pembayaran ini?')">
+                                                    <input type="hidden" name="id_pembayaran" value="<?= $row['id_pembayaran'] ?>">
+                                                    <input type="hidden" name="status_baru" value="Dikonfirmasi Pembayaran Silahkan AmbilBarang">
+                                                    <button type="submit" class="btn btn-sm btn-success" data-toggle="tooltip" title="Konfirmasi Pembayaran">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </form>
+
+                                                <form action="update_status.php" method="POST" style="display:inline-block;" onsubmit="return confirm('Tolak pembayaran ini?')">
+                                                    <input type="hidden" name="id_pembayaran" value="<?= $row['id_pembayaran'] ?>">
+                                                    <input type="hidden" name="status_baru" value="Ditolak Pembayaran">
+                                                    <button type="submit" class="btn btn-sm btn-warning" data-toggle="tooltip" title="Tolak Pembayaran">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </form>
                                             <?php endif; ?>
                                             
                                             <a href="hapus_pembayaran.php?id=<?= $row['id_pembayaran'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data pembayaran ini secara permanen?')" data-toggle="tooltip" title="Hapus Permanen">

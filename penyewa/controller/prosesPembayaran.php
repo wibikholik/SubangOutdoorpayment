@@ -73,13 +73,18 @@ if (!move_uploaded_file($file['tmp_name'], $target_file)) {
 }
 
 // Simpan ke pembayaran & update transaksi
-$tanggal_pembayaran = date('Y-m-d H:i:s');
+$tanggal_pembayaran = date('Y-m-d'); // Sesuaikan jika kolom di DB bertipe DATE
 $status_pembayaran = 'Menunggu Konfirmasi Pembayaran';
 
 // Update metode dan status di transaksi
 $stmt_update = $koneksi->prepare("UPDATE transaksi SET id_metode = ?, status = ? WHERE id_transaksi = ?");
+if (!$stmt_update) {
+    die("Gagal prepare update transaksi: " . $koneksi->error);
+}
 $stmt_update->bind_param("isi", $id_metode, $status_pembayaran, $id_transaksi);
-$stmt_update->execute();
+if (!$stmt_update->execute()) {
+    die("Gagal update transaksi: " . $stmt_update->error);
+}
 $stmt_update->close();
 
 // Insert ke tabel pembayaran
@@ -87,8 +92,13 @@ $stmt_insert = $koneksi->prepare("
     INSERT INTO pembayaran (id_transaksi, id_metode, tanggal_pembayaran, bukti_pembayaran, status_pembayaran)
     VALUES (?, ?, ?, ?, ?)
 ");
+if (!$stmt_insert) {
+    die("Gagal prepare insert pembayaran: " . $koneksi->error);
+}
 $stmt_insert->bind_param("iisss", $id_transaksi, $id_metode, $tanggal_pembayaran, $new_filename, $status_pembayaran);
-$stmt_insert->execute();
+if (!$stmt_insert->execute()) {
+    die("Gagal insert ke pembayaran: " . $stmt_insert->error);
+}
 $stmt_insert->close();
 
 // Kirim notifikasi email ke admin dan owner
@@ -107,7 +117,7 @@ try {
     $mail->Subject = 'Pembayaran Baru dari Penyewa';
     $mail->Body = "
         <h4>Pembayaran Baru Diupload</h4>
-        <p><strong>ID Transaksi:</strong>$id_transaksi</p>
+        <p><strong>ID Transaksi:</strong> $id_transaksi</p>
         <p><strong>Tanggal Sewa:</strong> $tanggal_sewa</p>
         <p><strong>Tanggal Kembali:</strong> $tanggal_kembali</p>
         <p>Status: <strong>$status_pembayaran</strong></p>
@@ -115,6 +125,7 @@ try {
     ";
 
     $emails = [];
+
     $result_admin = $koneksi->query("SELECT email FROM admin");
     while ($row = $result_admin->fetch_assoc()) {
         if (filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
@@ -138,6 +149,7 @@ try {
     error_log("Email error: " . $mail->ErrorInfo);
 }
 
+// ✅ Jika semua sukses
 echo "<script>alert('Bukti berhasil diupload. Menunggu konfirmasi admin.'); window.location.href='../page/transaksi.php';</script>";
 exit;
 ?>
