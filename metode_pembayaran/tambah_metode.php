@@ -5,6 +5,15 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['owner', 'admin']
     header('Location: ../login.php');
     exit;
 }
+
+include '../route/koneksi.php';
+
+// Ambil data tipe metode
+$tipe_metode_result = mysqli_query($koneksi, "SELECT * FROM tipe_metode ORDER BY nama_tipe ASC");
+$tipe_metode_list = [];
+while ($row = mysqli_fetch_assoc($tipe_metode_result)) {
+    $tipe_metode_list[] = $row;
+}
 ?>
 
 <!DOCTYPE html>
@@ -55,13 +64,23 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['owner', 'admin']
                             </div>
 
                             <div class="form-group">
-                                <label for="gambar">Gambar</label>
+                                <label for="gambar_metode">Gambar</label>
                                 <input type="file" name="gambar_metode" class="form-control-file" id="gambar_metode" accept="image/*" required>
                             </div>
 
                             <div class="form-group">
                                 <label for="atas_nama">Atas Nama</label>
                                 <input type="text" name="atas_nama" class="form-control" id="atas_nama" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="id_tipe">Tipe Metode</label>
+                                <select name="id_tipe" id="id_tipe" class="form-control" required>
+                                    <option value="">-- Pilih Tipe Metode --</option>
+                                    <?php foreach ($tipe_metode_list as $tipe): ?>
+                                        <option value="<?= $tipe['id_tipe'] ?>"><?= htmlspecialchars($tipe['nama_tipe']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
 
                             <button type="submit" class="btn btn-primary">Tambah</button>

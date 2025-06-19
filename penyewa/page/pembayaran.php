@@ -16,10 +16,11 @@ if ($id_transaksi === 0 || !$snap_token) {
     exit;
 }
 
-// Ambil data transaksi
-$sql = "SELECT t.*, m.nama_metode, m.tipe_metode, p.nama_penyewa 
+// Ambil data transaksi (dengan tipe metode)
+$sql = "SELECT t.*, m.nama_metode, tm.nama_tipe AS tipe_metode, p.nama_penyewa 
         FROM transaksi t
         JOIN metode_pembayaran m ON t.id_metode = m.id_metode
+        JOIN tipe_metode tm ON m.id_tipe = tm.id_tipe
         JOIN penyewa p ON t.id_penyewa = p.id_penyewa
         WHERE t.id_transaksi = ? AND t.id_penyewa = ?";
 $stmt = mysqli_prepare($koneksi, $sql);
@@ -32,7 +33,7 @@ if (mysqli_num_rows($result) === 0) {
 }
 $transaksi = mysqli_fetch_assoc($result);
 
-// ❗ Validasi status transaksi
+// Validasi status transaksi
 if (strtolower($transaksi['status']) !== 'belumbayar') {
     echo "<script>alert('Transaksi ini sudah diproses atau dibayar.'); window.location.href='../page/transaksi.php';</script>";
     exit;
@@ -58,7 +59,6 @@ while ($row = mysqli_fetch_assoc($resultDetail)) {
 <head>
     <meta charset="UTF-8" />
     <title>Pembayaran Transaksi #<?= htmlspecialchars($id_transaksi) ?></title>
-    <!-- Style & Midtrans -->
     <link rel="stylesheet" href="css/bootstrap.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="shortcut icon" href="../../assets/img/logo.jpg">
@@ -73,6 +73,7 @@ while ($row = mysqli_fetch_assoc($resultDetail)) {
 </head>
 <body>
 <?php include('../layout/navbar1.php') ?>
+
 <section class="banner-area organic-breadcrumb">
   <div class="container">
     <div class="breadcrumb-banner d-flex flex-wrap align-items-center justify-content-end">
@@ -98,11 +99,12 @@ while ($row = mysqli_fetch_assoc($resultDetail)) {
                         <hr>
                         <ul class="list">
                             <li>Nama Penyewa <span><?= htmlspecialchars($transaksi['nama_penyewa']) ?></span></li>
-                            <li>Metode Pembayaran <span><?= htmlspecialchars($transaksi['nama_metode']) ?></span></li>
+                            <li>Metode Pembayaran <span><?= htmlspecialchars($transaksi['nama_metode']) ?> (<?= htmlspecialchars($transaksi['tipe_metode']) ?>)</span></li>
                             <li>Tanggal Sewa <span><?= htmlspecialchars($transaksi['tanggal_sewa']) ?></span></li>
                             <li>Tanggal Kembali <span><?= htmlspecialchars($transaksi['tanggal_kembali']) ?></span></li>
                         </ul>
-<hr>
+
+                        <hr>
                         <h4 class="mt-4">Detail Barang Disewa</h4>
                         <ul class="list">
                             <?php

@@ -9,10 +9,13 @@ if (!isset($_SESSION['user_id'])) {
 
 $id_penyewa = $_SESSION['user_id'];
 
+// Query gabungan dengan LEFT JOIN ke metode_pembayaran dan tipe_metode agar nama_tipe tersedia
+// Perbaikan: tipe_metode di JOIN berdasarkan t.id_tipe, bukan mp.id_tipe
 $query_transaksi = "
-    SELECT t.*, mp.nama_metode, mp.gambar_metode, mp.nomor_rekening
+    SELECT t.*, mp.nama_metode, mp.gambar_metode, mp.nomor_rekening, tm.nama_tipe
     FROM transaksi t
-    JOIN metode_pembayaran mp ON t.id_metode = mp.id_metode
+    LEFT JOIN metode_pembayaran mp ON t.id_metode = mp.id_metode
+    LEFT JOIN tipe_metode tm ON t.id_tipe = tm.id_tipe
     WHERE t.id_penyewa = ?
     ORDER BY t.id_transaksi DESC
 ";
@@ -68,6 +71,7 @@ $result_transaksi = $stmt->get_result();
         $tanggal_kembali = new DateTime($transaksi['tanggal_kembali']);
         $lama_sewa = $tanggal_sewa->diff($tanggal_kembali)->days;
 
+        // Ambil detail barang per transaksi
         $query_detail = "
           SELECT dt.*, b.nama_barang, b.gambar 
           FROM detail_transaksi dt
@@ -81,6 +85,9 @@ $result_transaksi = $stmt->get_result();
             $stmt_detail->execute();
             $result_detail = $stmt_detail->get_result();
         }
+
+        // Pastikan nama_tipe aman dan bebas spasi
+        $tipe = strtolower(trim($transaksi['nama_tipe'] ?? ''));
       ?>
 
       <div class="card mb-4 shadow-sm p-3" style="min-width: 360px; max-width: 520px; flex: 1;">
@@ -88,7 +95,8 @@ $result_transaksi = $stmt->get_result();
           <div>
             <strong>ID Transaksi:</strong> <?= htmlspecialchars($id_transaksi); ?><br>
             <strong>Status:</strong> <?= htmlspecialchars($status); ?><br>
-            <strong>Metode:</strong> <?= htmlspecialchars($transaksi['nama_metode']); ?>
+            <strong>Metode:</strong> <?= htmlspecialchars($transaksi['nama_metode'] ?? 'Tidak ada metode'); ?><br>
+            <strong>Tipe Pembayaran:</strong> <?= htmlspecialchars($transaksi['nama_tipe'] ?? '-'); ?>
           </div>
         </div>
 
@@ -124,18 +132,19 @@ $result_transaksi = $stmt->get_result();
           <div class="d-flex justify-content-between mt-3 align-items-center">
             <div><strong>Total:</strong> Rp<?= number_format($transaksi['total_harga_sewa'], 0, ',', '.'); ?></div>
             <div>
-              <?php if (strtolower($status) === 'belumbayar'): ?>
-                <?php if (!empty($transaksi['snap_token'])): ?>
+              <?php if ($tipe === 'online' && strtolower($status) === 'belumbayar' && !empty($transaksi['snap_token'])): ?>
                   <form action="pembayaran.php" method="GET" class="d-inline">
-                    <input type="hidden" name="id_transaksi" value="<?= $id_transaksi; ?>">
-                    <input type="hidden" name="token" value="<?= htmlspecialchars($transaksi['snap_token']); ?>"> 
-                    <button type="submit" class="btn btn-primary btn-sm">Bayar Sekarang</button>
+                      <input type="hidden" name="id_transaksi" value="<?= $id_transaksi; ?>">
+                      <input type="hidden" name="token" value="<?= htmlspecialchars($transaksi['snap_token']); ?>"> 
+                      <button type="submit" class="btn btn-primary btn-sm">Bayar Sekarang</button>
                   </form>
-                <?php else: ?>
-                  <span class="text-danger">Token pembayaran belum tersedia.</span>
-                <?php endif; ?>
+              <?php elseif ($tipe === 'transfer langsung' && strtolower($status) === 'belumbayar'): ?>
+                  <a href="pembayaran_upload.php?id_transaksi=<?= $id_transaksi ?>&pilih=1" class="btn btn-sm btn-success">Upload Bukti Transfer</a>
+              <?php elseif (strtolower($status) === 'belumbayar'): ?>
+                  <span class="text-muted">Menunggu pembayaran langsung.</span>
+              <?php endif; ?>
 
-              <?php elseif ($status === 'dikonfirmasi pembayaran silahkan ambilbarang' || $status === 'Dikonfirmasi (Silahkan Ambil Barang)'): ?>
+              <?php if (in_array(strtolower($status), ['dikonfirmasi pembayaran silahkan ambilbarang', 'dikonfirmasi (silahkan ambil barang)'])): ?>
                 <?php if ($transaksi['status_checklist'] == 0): ?>
                   <a href="checklist.php?id_transaksi=<?= $id_transaksi ?>" class="btn btn-sm btn-warning">Form pengambilan Barang</a>
                 <?php else: ?>
@@ -143,7 +152,7 @@ $result_transaksi = $stmt->get_result();
                 <?php endif; ?>
               <?php endif; ?>
 
-              <?php if (strtolower($status) === 'disewa' || strtolower($status) === 'terlambat dikembalikan'): ?>
+              <?php if (in_array(strtolower($status), ['disewa', 'terlambat dikembalikan'])): ?>
                 <a href="pengembalian.php?id_transaksi=<?= $id_transaksi ?>" class="btn btn-sm btn-danger ms-2">Pengembalian</a>
               <?php endif; ?>
 

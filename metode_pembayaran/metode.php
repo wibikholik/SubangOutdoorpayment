@@ -21,14 +21,16 @@ if (isset($_GET['pesan'])) {
     }
 }
 
-// Ambil data metode pembayaran dari database
-$query = "SELECT * FROM metode_pembayaran ORDER BY id_metode DESC";
+// Ambil data metode pembayaran beserta tipe metode dengan JOIN
+$query = "SELECT mp.*, tm.nama_tipe AS tipe_metode 
+          FROM metode_pembayaran mp
+          LEFT JOIN tipe_metode tm ON mp.id_tipe = tm.id_tipe
+          ORDER BY mp.id_metode DESC";
 $result = mysqli_query($koneksi, $query);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -39,9 +41,7 @@ $result = mysqli_query($koneksi, $query);
     
     <link href="../assets/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
 </head>
-
 <body id="page-top">
-
     <div id="wrapper">
         <?php include '../layout/sidebar.php'; ?>
         <div id="content-wrapper" class="d-flex flex-column">
@@ -77,6 +77,7 @@ $result = mysqli_query($koneksi, $query);
                                             <th>Nomor Rekening</th>
                                             <th>Gambar Metode</th>
                                             <th>Atas Nama</th>
+                                            <th>Tipe Metode</th> <!-- Tambahan kolom tipe metode -->
                                             <th>Aksi</th>
                                         </tr>
                                     </thead>
@@ -89,12 +90,13 @@ $result = mysqli_query($koneksi, $query);
                                                     <td><?= htmlspecialchars($row['nomor_rekening']) ?></td>
                                                     <td>
                                                         <?php if (!empty($row['gambar_metode'])): ?>
-                                                            <img src="metode/gambar/<?= $row['gambar_metode'] ?>" width="100" alt="gambar_metode">
+                                                            <img src="metode/gambar/<?= htmlspecialchars($row['gambar_metode']) ?>" width="100" alt="gambar_metode">
                                                         <?php else: ?>
                                                             <em>tidak ada</em>
                                                         <?php endif; ?>
                                                     </td>
                                                     <td><?= htmlspecialchars($row['atas_nama']) ?></td>
+                                                    <td><?= htmlspecialchars($row['tipe_metode'] ?? 'Tidak diketahui') ?></td> <!-- Tampilkan tipe_metode -->
                                                     <td>
                                                         <a class="btn btn-warning btn-sm" href="edit.php?id_metode=<?= $row['id_metode'] ?>" data-toggle="tooltip" title="Edit">
                                                             <i class="fas fa-pencil-alt"></i>
@@ -107,7 +109,7 @@ $result = mysqli_query($koneksi, $query);
                                             <?php endwhile; ?>
                                         <?php else: ?>
                                             <tr>
-                                                <td colspan="6" class="text-center">Belum ada data metode pembayaran.</td>
+                                                <td colspan="7" class="text-center">Belum ada data metode pembayaran.</td>
                                             </tr>
                                         <?php endif; ?>
                                     </tbody>
@@ -118,7 +120,7 @@ $result = mysqli_query($koneksi, $query);
 
                 </div>
             </div>
-            </div>
+        </div>
     </div>
 
     <script src="../assets/vendor/jquery/jquery.min.js"></script>
@@ -131,15 +133,12 @@ $result = mysqli_query($koneksi, $query);
 
     <script>
         $(document).ready(function() {
-            // Inisialisasi DataTable
             $('#dataTable').DataTable({
                 "order": [[0, "desc"]]
             });
 
-            // Inisialisasi Tooltip
             $('[data-toggle="tooltip"]').tooltip();
         });
     </script>
 </body>
-
 </html>

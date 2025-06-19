@@ -2,7 +2,6 @@
 include '../../route/koneksi.php';
 session_start();
 
-// Cek login
 if (!isset($_SESSION['user_id'])) {
     echo "<script>alert('Silakan login terlebih dahulu.'); window.location.href='../../login.php';</script>";
     exit;
@@ -10,7 +9,6 @@ if (!isset($_SESSION['user_id'])) {
 
 $id_penyewa = $_SESSION['user_id'];
 
-// Pastikan input POST tersedia dan berupa array
 $selected_ids = isset($_POST['selected_items']) && is_array($_POST['selected_items']) ? $_POST['selected_items'] : [];
 $jumlah_items = isset($_POST['jumlah']) && is_array($_POST['jumlah']) ? $_POST['jumlah'] : [];
 
@@ -18,24 +16,18 @@ if (empty($selected_ids)) {
     die("Tidak ada item yang dipilih.");
 }
 
-// Prepared statement untuk update jumlah di carts
 $stmt_update = $koneksi->prepare("UPDATE carts SET jumlah = ? WHERE id = ? AND id_penyewa = ?");
-
-// Update jumlah di carts
 foreach ($selected_ids as $cart_id) {
     $cart_id_int = (int)$cart_id;
     $jumlah_baru = isset($jumlah_items[$cart_id]) ? (int)$jumlah_items[$cart_id] : 1;
     if ($jumlah_baru < 1) $jumlah_baru = 1;
-
     $stmt_update->bind_param("iis", $jumlah_baru, $cart_id_int, $id_penyewa);
     $stmt_update->execute();
 }
 $stmt_update->close();
 
-// Buat daftar id carts untuk query select
 $id_list = implode(',', array_map('intval', $selected_ids));
 
-// Ambil data carts dan barang
 $sql_carts = "SELECT carts.id, carts.id_barang, barang.gambar, barang.nama_barang, carts.jumlah, carts.harga
               FROM carts
               JOIN barang ON carts.id_barang = barang.id_barang
@@ -49,7 +41,6 @@ if (!$result_carts) {
     die("Query error: " . $koneksi->error);
 }
 
-// Ambil data penyewa
 $stmt_penyewa = $koneksi->prepare("SELECT nama_penyewa, no_hp, alamat FROM penyewa WHERE id_penyewa = ?");
 $stmt_penyewa->bind_param("s", $id_penyewa);
 $stmt_penyewa->execute();
@@ -57,9 +48,17 @@ $result_penyewa = $stmt_penyewa->get_result();
 $penyewa = $result_penyewa->fetch_assoc();
 $stmt_penyewa->close();
 
-// Ambil metode pembayaran
-$result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
-
+$tipe_metode = [];
+$sql = "SELECT tm.id_tipe, tm.nama_tipe
+        FROM tipe_metode tm
+        ORDER BY tm.nama_tipe ASC";
+$result = $koneksi->query($sql);
+while ($row = $result->fetch_assoc()) {
+    $id_tipe = $row['id_tipe'];
+    $tipe_metode[$id_tipe] = [
+        'nama_tipe' => $row['nama_tipe']
+    ];
+}
 ?>
 
 <!DOCTYPE html>
@@ -78,33 +77,27 @@ $result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
     <link rel="stylesheet" href="css/nouislider.min.css" />
     <link rel="stylesheet" href="css/bootstrap.css" />
     <link rel="stylesheet" href="css/main.css" />
-    <link rel="shortcut icon" href="../../assets/img/logo.jpg">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="shortcut icon" href="../../assets/img/logo.jpg" />
 </head>
 
 <body>
 
-    <!-- Header -->
     <?php include("../layout/navbar1.php") ?>
-
-    <!-- Banner -->
     <section class="banner-area organic-breadcrumb">
         <div class="container">
             <div class="breadcrumb-banner d-flex flex-wrap align-items-center justify-content-end">
                 <div class="col-first">
                     <h1>Subang Outdoor</h1>
                     <nav class="d-flex align-items-center">
-                        <a href="checkout.php">Booking</a>
+                        <a href="#">Form Kondisi Awal Barang</a>
                     </nav>
                 </div>
             </div>
         </div>
     </section>
-
-    <!-- Checkout Area -->
     <section class="checkout_area section_gap">
         <div class="container">
-            <div class="info mb-3" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="info mb-3 d-flex justify-content-between align-items-center">
                 <div>
                     <strong>Nama Penyewa</strong><br />
                     <?= htmlspecialchars($penyewa['nama_penyewa']) ?>
@@ -144,28 +137,23 @@ $result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
 
                     <div style="min-width: 300px;">
                         <label for="tanggal_sewa" class="fw-bold fs-6">Sewa:</label>
-                        <input type="date" id="tanggal_sewa" name="tanggal_sewa" class="w3-input w3-border mb-3" required
-                            style="font-size:14px; padding:6px;"
-                            min="<?= date('Y-m-d') ?>" />
+                        <input type="date" id="tanggal_sewa" name="tanggal_sewa" class="form-control mb-3" required min="<?= date('Y-m-d') ?>" />
 
                         <label for="tanggal_kembali" class="fw-bold fs-6">Kembali:</label>
-                        <input type="date" id="tanggal_kembali" name="tanggal_kembali" class="w3-input w3-border mb-3" required
-                            style="font-size:14px; padding:6px;"
-                            min="<?= date('Y-m-d') ?>" />
+                        <input type="date" id="tanggal_kembali" name="tanggal_kembali" class="form-control mb-3" required min="<?= date('Y-m-d') ?>" />
 
-                        <h4>Metode Pembayaran</h4>
+                        <h4>Metode Pembayaran (Tipe Metode)</h4>
                         <?php
-                        if ($result_metode->num_rows > 0) :
-                            $first = true;
-                            while ($metode = $result_metode->fetch_assoc()) : ?>
-                                <label class="me-3" style="cursor:pointer;" title="<?= htmlspecialchars($metode['nama_metode']) ?>">
-                                    <input type="radio" name="id_metode" value="<?= (int)$metode['id_metode'] ?>" <?= $first ? 'checked' : '' ?> required />
-                                    <span><?= htmlspecialchars($metode['nama_metode']) ?></span>
-                                </label>
+                        $first = true;
+                        foreach ($tipe_metode as $id_tipe => $data) :
+                        ?>
+                            <label class="me-3" style="cursor:pointer;" title="<?= htmlspecialchars($data['nama_tipe']) ?>">
+                                <input type="radio" name="id_tipe" value="<?= $id_tipe ?>" <?= $first ? 'checked' : '' ?> required />
+                                <span><?= htmlspecialchars($data['nama_tipe']) ?></span>
+                            </label>
                         <?php
-                                $first = false;
-                            endwhile;
-                        endif;
+                            $first = false;
+                        endforeach;
                         ?>
 
                         <h4>Total Bayar</h4>
@@ -174,7 +162,6 @@ $result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
 
                         <button type="submit" class="btn btn-dark">Konfirmasi</button>
                     </div>
-
                 </form>
             <?php else : ?>
                 <p>Tidak ada item di keranjang Anda.</p>
@@ -182,70 +169,9 @@ $result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
         </div>
     </section>
 
-    <!-- Scripts -->
-    <script>
-        const cartItems = <?= json_encode($cart_items ?? []) ?>;
-
-        function hitungSelisihHari(tgl1, tgl2) {
-            if (!tgl1 || !tgl2) return 0;
-            const date1 = new Date(tgl1);
-            const date2 = new Date(tgl2);
-            const diffTime = date2 - date1;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            return diffDays > 0 ? diffDays : 0;
-        }
-
-        function updateTotalBayar() {
-            const tglSewa = document.getElementById('tanggal_sewa').value;
-            const tglKembali = document.getElementById('tanggal_kembali').value;
-            const hariSewa = hitungSelisihHari(tglSewa, tglKembali);
-
-            let totalBayar = 0;
-            cartItems.forEach(item => {
-                const subtotalElem = document.getElementById('subtotal-' + item.id);
-                const subtotal = hariSewa * item.harga * item.jumlah;
-                subtotalElem.textContent = "Subtotal: Rp " + subtotal.toLocaleString('id-ID');
-                totalBayar += subtotal;
-            });
-
-            document.getElementById('total_bayar_display').textContent = "Rp " + totalBayar.toLocaleString('id-ID');
-            document.getElementById('total_harga_sewa').value = totalBayar;
-        }
-
-        function validateDates() {
-            const tglSewa = document.getElementById('tanggal_sewa').value;
-            const tglKembali = document.getElementById('tanggal_kembali').value;
-            const totalBayar = parseInt(document.getElementById('total_harga_sewa').value, 10);
-
-            if (!tglSewa || !tglKembali) {
-                alert('Tanggal sewa dan tanggal kembali harus diisi.');
-                return false;
-            }
-
-            if (tglKembali <= tglSewa) {
-                alert('Tanggal kembali harus setelah tanggal sewa.');
-                return false;
-            }
-
-            if (totalBayar <= 0) {
-                alert('Total bayar harus lebih dari 0.');
-                return false;
-            }
-
-            return true;
-        }
-
-        document.getElementById('tanggal_sewa').addEventListener('change', updateTotalBayar);
-        document.getElementById('tanggal_kembali').addEventListener('change', updateTotalBayar);
-
-        // Update harga saat load halaman (jika ada tanggal default)
-        window.addEventListener('load', updateTotalBayar);
-    </script>
-
+    <!-- Semua library JS -->
     <script src="js/vendor/jquery-2.2.4.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"
-        integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous">
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
     <script src="js/vendor/bootstrap.min.js"></script>
     <script src="js/jquery.ajaxchimp.min.js"></script>
     <script src="js/jquery.nice-select.min.js"></script>
@@ -253,10 +179,73 @@ $result_metode = $koneksi->query("SELECT * FROM metode_pembayaran");
     <script src="js/nouislider.min.js"></script>
     <script src="js/jquery.magnific-popup.min.js"></script>
     <script src="js/owl.carousel.min.js"></script>
-    <!--gmaps Js-->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjCGmQ0Uq4exrzdcL6rvxywDDOvfAu6eE"></script>
     <script src="js/gmaps.min.js"></script>
     <script src="js/main.js"></script>
+
+    <script>
+        const cartItems = <?= json_encode($cart_items ?? []) ?>;
+
+        $(document).ready(function() {
+            function hitungSelisihHari(tgl1, tgl2) {
+                if (!tgl1 || !tgl2) return 0;
+                const date1 = new Date(tgl1);
+                const date2 = new Date(tgl2);
+                const diffTime = date2 - date1;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays > 0 ? diffDays : 0;
+            }
+
+            function updateTotalBayar() {
+                const tglSewa = $('#tanggal_sewa').val();
+                const tglKembali = $('#tanggal_kembali').val();
+                const hariSewa = hitungSelisihHari(tglSewa, tglKembali);
+
+                let totalBayar = 0;
+                cartItems.forEach(function(item) {
+                    const subtotal = hariSewa * item.harga * item.jumlah;
+                    $('#subtotal-' + item.id).text("Subtotal: Rp " + subtotal.toLocaleString('id-ID'));
+                    totalBayar += subtotal;
+                });
+
+                $('#total_bayar_display').text("Rp " + totalBayar.toLocaleString('id-ID'));
+                $('#total_harga_sewa').val(totalBayar);
+            }
+
+            $('#tanggal_sewa, #tanggal_kembali').on('change', updateTotalBayar);
+
+            function validateDates() {
+                const tglSewa = $('#tanggal_sewa').val();
+                const tglKembali = $('#tanggal_kembali').val();
+                const totalBayar = parseInt($('#total_harga_sewa').val(), 10);
+
+                if (!tglSewa || !tglKembali) {
+                    alert('Tanggal sewa dan tanggal kembali harus diisi.');
+                    return false;
+                }
+
+                if (tglKembali <= tglSewa) {
+                    alert('Tanggal kembali harus setelah tanggal sewa.');
+                    return false;
+                }
+
+                if (totalBayar <= 0) {
+                    alert('Total bayar harus lebih dari 0.');
+                    return false;
+                }
+
+                return true;
+            }
+
+            $('#checkout-form').on('submit', function(e) {
+                if (!validateDates()) {
+                    e.preventDefault();
+                }
+            });
+
+            // Hitung total awal saat halaman load
+            updateTotalBayar();
+        });
+    </script>
 </body>
 
 <?php include("../layout/footer.php") ?>

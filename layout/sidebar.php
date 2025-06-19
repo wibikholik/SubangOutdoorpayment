@@ -58,6 +58,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     <span>Metode Pembayaran</span>
                 </a>
             </li>
+              <li class="nav-item <?php if ($currentPage == 'tipe_metode.php') echo 'active'; ?>">
+                <a class="nav-link" href="../tipe metode/tipe_metode.php">
+                    <i class="fas fa-fw fa-credit-card"></i>
+                    <span>Tipe Metode Pembayaran</span>
+                </a>
+            </li>
             <li class="nav-item <?php if ($currentPage == 'transaksi.php') echo 'active'; ?>">
                 <a class="nav-link" href="../transaksi/transaksi.php">
                     <i class="fas fa-fw fa-clipboard-list"></i>
@@ -123,6 +129,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <a class="nav-link" href="../metode_pembayaran/metode.php">
                     <i class="fas fa-fw fa-credit-card"></i>
                     <span>Metode Pembayaran</span>
+                </a>
+            </li>
+            <li class="nav-item <?php if ($currentPage == 'tipe_metode.php') echo 'active'; ?>">
+                <a class="nav-link" href="../tipe metode/tipe_metode.php">
+                    <i class="fas fa-fw fa-credit-card"></i>
+                    <span>Tipe Metode Pembayaran</span>
                 </a>
             </li>
             <li class="nav-item <?php if ($currentPage == 'transaksi.php') echo 'active'; ?>">

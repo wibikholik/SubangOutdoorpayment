@@ -21,22 +21,25 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['owner', 'admin']
 <body id="page-top">
 <div id="wrapper">
 
-    <!-- Sidebar -->
     <?php include '../layout/sidebar.php'; ?>
-    <!-- End of Sidebar -->
 
     <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
 
-            <!-- Navbar -->
             <?php include '../layout/navbar.php'; ?>
-            <!-- End of Navbar -->
 
             <div class="container-fluid">
                 <h1 class="h3 mb-4 text-gray-800">Edit Data Metode</h1>
 
                 <?php
                 include "../route/koneksi.php";
+
+                // Ambil data tipe metode dari tabel tipe_metode
+                $tipe_metode_result = mysqli_query($koneksi, "SELECT * FROM tipe_metode ORDER BY nama_tipe ASC");
+                $tipe_metode_list = [];
+                while ($row_tipe = mysqli_fetch_assoc($tipe_metode_result)) {
+                    $tipe_metode_list[] = $row_tipe; // simpan array tipe metode
+                }
 
                 if (isset($_GET['id_metode'])) {
                     $id_metode = intval($_GET['id_metode']);
@@ -46,6 +49,8 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['owner', 'admin']
                     $result = mysqli_stmt_get_result($stmt);
 
                     if ($data = mysqli_fetch_assoc($result)) {
+                        // Ini sekarang id_tipe yang tersimpan
+                        $current_id_tipe = $data['id_tipe'];
                 ?>
                     <form action="update.php" method="post" enctype="multipart/form-data" class="card shadow p-4">
                         <input type="hidden" name="id_metode" value="<?= $data['id_metode'] ?>">
@@ -61,11 +66,23 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['owner', 'admin']
                         </div>
 
                         <div class="form-group">
-                            <label for="gambar">Gambar</label>
-                            <input type="file" name="gambar" class="form-control-file" accept="image/*" id="gambar">
+                            <label for="id_tipe">Tipe Metode</label>
+                            <select name="id_tipe" id="id_tipe" class="form-control" required>
+                                <option value="">-- Pilih Tipe Metode --</option>
+                                <?php foreach ($tipe_metode_list as $tipe): ?>
+                                    <option value="<?= $tipe['id_tipe'] ?>" <?= ($current_id_tipe == $tipe['id_tipe']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($tipe['nama_tipe']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gambar_metode">Gambar</label>
+                            <input type="file" name="gambar_metode" class="form-control-file" accept="image/*" id="gambar_metode">
                             <?php if (!empty($data['gambar_metode'])) : ?>
                                 <div class="mt-2">
-                                    <img src="image/metode/<?= htmlspecialchars($data['gambar_metode']) ?>" alt="Gambar metode" style="width: 100px; height: auto;">
+                                    <img src="metode/gambar/<?= htmlspecialchars($data['gambar_metode']) ?>" alt="Gambar metode" style="width: 100px; height: auto;">
                                     <small class="form-text text-muted">Biarkan kosong jika tidak ingin mengubah gambar.</small>
                                 </div>
                             <?php endif; ?>

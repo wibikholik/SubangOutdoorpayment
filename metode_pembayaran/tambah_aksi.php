@@ -1,57 +1,57 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['admin', 'owner'])) {
-    header("Location: ../login.php");
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['owner', 'admin'])) {
+    header('Location: ../login.php');
     exit;
 }
 
-include '../route/koneksi.php'; 
+include '../route/koneksi.php';
 
-$folder_upload = "metode/gambar/";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nama_metode = $_POST['nama_metode'] ?? '';
+    $nomor_rekening = $_POST['nomor_rekening'] ?? '';
+    $atas_nama = $_POST['atas_nama'] ?? '';
+    $id_tipe = $_POST['id_tipe'] ?? '';
 
-// Pastikan folder ada
-if (!is_dir($folder_upload)) {
-    mkdir($folder_upload, 0755, true);
-}
+    // Validasi sederhana
+    if (empty($nama_metode) || empty($nomor_rekening) || empty($atas_nama) || empty($id_tipe)) {
+        die("Semua field harus diisi.");
+    }
 
-// Ambil data dari form
-$Nama_Metode     = mysqli_real_escape_string($koneksi, $_POST['nama_metode']);
-$Nomor_Rekening  = mysqli_real_escape_string($koneksi, $_POST['nomor_rekening']);
-$Atas_Nama       = mysqli_real_escape_string($koneksi, $_POST['atas_nama']);
+    // Upload gambar
+    $target_dir = "metode/gambar/";
+    $gambar_name = null;
+    if (isset($_FILES['gambar_metode']) && $_FILES['gambar_metode']['error'] == 0) {
+        $file_tmp = $_FILES['gambar_metode']['tmp_name'];
+        $file_name = basename($_FILES['gambar_metode']['name']);
+        $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+        $allowed = ['jpg','jpeg','png','gif'];
 
-if (isset($_FILES['gambar_metode']) && $_FILES['gambar_metode']['error'] === 0) {
-    $file_tmp = $_FILES['gambar_metode']['tmp_name'];
-    $file_name = basename($_FILES['gambar_metode']['name']);
-    $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-    $allowed_ext = array('jpg', 'jpeg', 'png', 'gif');
+        if (!in_array($ext, $allowed)) {
+            die("Format file tidak didukung. Harus jpg, jpeg, png, atau gif.");
+        }
 
-    if (in_array($file_ext, $allowed_ext)) {
-        $new_file_name = time() . "_" . preg_replace("/[^a-zA-Z0-9._-]/", "", $file_name);
-        $target_file = $folder_upload . $new_file_name;
-
-        if (move_uploaded_file($file_tmp, $target_file)) {
-            $query = "INSERT INTO metode_pembayaran (nama_metode, nomor_rekening, gambar_metode, atas_nama) 
-                      VALUES ('$Nama_Metode', '$Nomor_Rekening', '$new_file_name', '$Atas_Nama')";
-
-            if (mysqli_query($koneksi, $query)) {
-                header("Location: metode.php?pesan=input");
-                exit;
-            } else {
-                echo "Error saat memasukkan data ke database: " . mysqli_error($koneksi);
-                exit;
-            }
-
-        } else {
-            echo "Gagal mengupload gambar.";
-            exit;
+        $gambar_name = uniqid() . '.' . $ext;
+        if (!move_uploaded_file($file_tmp, $target_dir . $gambar_name)) {
+            die("Gagal mengupload gambar.");
         }
     } else {
-        echo "Format gambar tidak didukung. Gunakan JPG, JPEG, PNG, atau GIF.";
+        die("Gambar harus diupload.");
+    }
+
+    // Insert ke database
+    $stmt = mysqli_prepare($koneksi, "INSERT INTO metode_pembayaran (id_tipe, nama_metode, nomor_rekening, gambar_metode, atas_nama) VALUES (?, ?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt, "issss", $id_tipe, $nama_metode, $nomor_rekening, $gambar_name, $atas_nama);
+    $exec = mysqli_stmt_execute($stmt);
+
+    if ($exec) {
+        header("Location: metode.php?pesan=input");
         exit;
+    } else {
+        echo "Error: " . mysqli_error($koneksi);
     }
 } else {
-    echo "Gambar belum diupload atau terjadi kesalahan saat upload.";
+    header("Location: metode.php");
     exit;
 }
-?>

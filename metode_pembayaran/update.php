@@ -1,66 +1,71 @@
 <?php
+session_start();
+
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['owner', 'admin'])) {
+    header('Location: ../login.php');
+    exit;
+}
+
 include '../route/koneksi.php';
 
-// Path upload gambar
-$folder_upload = "metode/gambar/";
-if (!is_dir($folder_upload)) {
-    mkdir($folder_upload, 0755, true);
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id_metode = $_POST['id_metode'] ?? 0;
+    $nama_metode = $_POST['nama_metode'] ?? '';
+    $nomor_rekening = $_POST['nomor_rekening'] ?? '';
+    $atas_nama = $_POST['atas_nama'] ?? '';
+    $id_tipe = $_POST['id_tipe'] ?? '';
 
-$id_metode     = $_POST['id_metode'];
-$nama_metode   = $_POST['nama_metode'];
-$nomor_rekening = $_POST['nomor_rekening'];
-$atas_nama     = $_POST['atas_nama'];
-$new_file_name = null; // Default jika tidak upload gambar
-
-// Ambil gambar lama dari database
-$query = mysqli_query($koneksi, "SELECT gambar_metode FROM metode_pembayaran WHERE id_metode='$id_metode'");
-$data_lama = mysqli_fetch_assoc($query);
-$gambar_lama = $data_lama['gambar_metode'] ?? null;
-
-// Cek apakah ada file gambar baru yang diupload
-if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] === 0) {
-    $file_tmp = $_FILES['gambar']['tmp_name'];
-    $file_name = basename($_FILES['gambar']['name']);
-    $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-    $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
-
-    if (in_array($file_ext, $allowed_ext)) {
-        $new_file_name = time() . "_" . preg_replace("/[^a-zA-Z0-9._-]/", "", $file_name);
-        $target_file = $folder_upload . $new_file_name;
-
-        if (move_uploaded_file($file_tmp, $target_file)) {
-            // Hapus gambar lama jika ada
-            if (!empty($gambar_lama) && file_exists($folder_upload . $gambar_lama)) {
-                unlink($folder_upload . $gambar_lama);
-            }
-        } else {
-            echo "Gagal mengupload gambar baru.";
-            exit;
-        }
-    } else {
-        echo "Format gambar tidak didukung. Gunakan JPG, JPEG, PNG, atau GIF.";
-        exit;
+    if (!$id_metode || empty($nama_metode) || empty($nomor_rekening) || empty($atas_nama) || empty($id_tipe)) {
+        die("Data tidak lengkap.");
     }
-}
 
-// Bangun query UPDATE
-if ($new_file_name) {
-    $update_query = "UPDATE metode_pembayaran SET 
-        nama_metode='$nama_metode',
-        nomor_rekening='$nomor_rekening',
-        gambar_metode='$new_file_name',
-        atas_nama='$atas_nama'
-        WHERE id_metode='$id_metode'";
+    // Cek gambar baru
+    $gambar_name = null;
+    $target_dir = "metode/gambar/";
+
+    if (isset($_FILES['gambar_metode']) && $_FILES['gambar_metode']['error'] == 0) {
+        $file_tmp = $_FILES['gambar_metode']['tmp_name'];
+        $file_name = basename($_FILES['gambar_metode']['name']);
+        $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+        $allowed = ['jpg','jpeg','png','gif'];
+
+        if (!in_array($ext, $allowed)) {
+            die("Format file tidak didukung.");
+        }
+
+        $gambar_name = uniqid() . '.' . $ext;
+        if (!move_uploaded_file($file_tmp, $target_dir . $gambar_name)) {
+            die("Gagal mengupload gambar.");
+        }
+
+        // Hapus gambar lama jika ada
+        $old_img_query = mysqli_prepare($koneksi, "SELECT gambar_metode FROM metode_pembayaran WHERE id_metode = ?");
+        mysqli_stmt_bind_param($old_img_query, "i", $id_metode);
+        mysqli_stmt_execute($old_img_query);
+        mysqli_stmt_bind_result($old_img_query, $old_img);
+        mysqli_stmt_fetch($old_img_query);
+        mysqli_stmt_close($old_img_query);
+
+        if ($old_img && file_exists($target_dir . $old_img)) {
+            unlink($target_dir . $old_img);
+        }
+    }
+
+    if ($gambar_name) {
+        $stmt = mysqli_prepare($koneksi, "UPDATE metode_pembayaran SET id_tipe = ?, nama_metode = ?, nomor_rekening = ?, gambar_metode = ?, atas_nama = ? WHERE id_metode = ?");
+        mysqli_stmt_bind_param($stmt, "issssi", $id_tipe, $nama_metode, $nomor_rekening, $gambar_name, $atas_nama, $id_metode);
+    } else {
+        $stmt = mysqli_prepare($koneksi, "UPDATE metode_pembayaran SET id_tipe = ?, nama_metode = ?, nomor_rekening = ?, atas_nama = ? WHERE id_metode = ?");
+        mysqli_stmt_bind_param($stmt, "isssi", $id_tipe, $nama_metode, $nomor_rekening, $atas_nama, $id_metode);
+    }
+
+    if (mysqli_stmt_execute($stmt)) {
+        header("Location: metode.php?pesan=update");
+        exit;
+    } else {
+        echo "Error: " . mysqli_error($koneksi);
+    }
 } else {
-    $update_query = "UPDATE metode_pembayaran SET 
-        nama_metode='$nama_metode',
-        nomor_rekening='$nomor_rekening',
-        atas_nama='$atas_nama'
-        WHERE id_metode='$id_metode'";
+    header("Location: metode.php");
+    exit;
 }
-
-mysqli_query($koneksi, $update_query) or die(mysqli_error($koneksi));
-header("location:metode.php?pesan=update");
-exit;
-?>

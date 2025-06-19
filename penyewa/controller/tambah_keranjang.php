@@ -51,7 +51,7 @@ if (isset($_POST['id_barang']) && isset($_POST['jumlah'])) {
         $insertQuery = mysqli_query($koneksi, "INSERT INTO carts (id_penyewa, id_barang, jumlah, harga) VALUES ('$id_penyewa', '$id_barang', '$jumlah', '$total_harga')");
 
         if ($insertQuery) {
-            echo "<script>alert('Barang berhasil ditambahkan ke keranjang.'); window.location.href='../page/produk.php';</script>";
+            echo "<script>alert('Barang berhasil ditambahkan ke keranjang.'); window.location.href='../page/keranjang.php';</script>";
         } else {
             echo "<script>alert('Gagal menambahkan ke keranjang.'); window.history.back();</script>";
         }
