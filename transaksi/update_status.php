@@ -21,39 +21,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status_baru = isset($_POST['status_baru']) ? trim($_POST['status_baru']) : '';
     $target_table = isset($_POST['target_table']) ? trim($_POST['target_table']) : '';
 
-    // Valid status untuk masing-masing tabel
     $valid_status = [
         'transaksi' => [
             'menunggu konfirmasi pembayaran',
-            'Dikonfirmasi Pembayaran Silahkan AmbilBarang',
-            'Ditolak Pembayaran',
+            'dikonfirmasi pembayaran silahkan ambilbarang',
+            'ditolak pembayaran',
             'selesai pembayaran',
             'disewa',
-            'terlambat dikembalikan'
+            'terlambat dikembalikan',
+            'batal' // Tambahan penting!
         ],
         'pembayaran' => [
-            'Menunggu Konfirmasi Pembayaran',
-            'Dikonfirmasi Pembayaran Silahkan AmbilBarang',
-            'Ditolak Pembayaran',
+            'menunggu konfirmasi pembayaran',
+            'dikonfirmasi pembayaran silahkan ambilbarang',
+            'ditolak pembayaran',
             'selesai pembayaran'
         ]
     ];
 
-    // Validasi ID dan tabel
     if ($id <= 0 || !array_key_exists($target_table, $valid_status)) {
         die('Input ID atau nama tabel tidak valid.');
     }
 
-    // Validasi status baru
     if (!in_array(strtolower($status_baru), array_map('strtolower', $valid_status[$target_table]), true)) {
         die('Status baru tidak valid untuk tabel ' . htmlspecialchars($target_table));
     }
 
-    // Mapping nama kolom ID & status berdasarkan tabel
     $id_column = $target_table === 'transaksi' ? 'id_transaksi' : 'id_pembayaran';
     $status_column = $target_table === 'pembayaran' ? 'status_pembayaran' : 'status';
 
-    // Update status utama
     $sql = "UPDATE $target_table SET $status_column = ? WHERE $id_column = ?";
     $stmt = $koneksi->prepare($sql);
     if (!$stmt) {
@@ -65,7 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $stmt->close();
 
-    // Jika update pada transaksi
     if ($target_table === 'transaksi') {
         // Sinkronkan ke pembayaran
         $sql_pembayaran = "UPDATE pembayaran SET status_pembayaran = ? WHERE id_transaksi = ?";
@@ -76,8 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt_pembayaran->close();
         }
 
-        // Jika status: Dikonfirmasi → kurangi stok + kirim email
-        if (strtolower($status_baru) === strtolower('dikonfirmasi pembayaran silahkan ambilbarang')) {
+        // === STOK DIKURANGI ===
+        if (strtolower($status_baru) === 'dikonfirmasi pembayaran silahkan ambilbarang') {
             $query_items = "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?";
             $stmt_items = $koneksi->prepare($query_items);
             $stmt_items->bind_param("i", $id);
@@ -95,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmt_items->close();
 
-            // Ambil data email
+            // Kirim email konfirmasi
             $query_email = "SELECT p.email, p.nama_penyewa FROM transaksi t JOIN penyewa p ON t.id_penyewa = p.id_penyewa WHERE t.id_transaksi = ?";
             $stmt_email = $koneksi->prepare($query_email);
             $stmt_email->bind_param("i", $id);
@@ -126,18 +121,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h3>Halo, $nama!</h3>
                         <p>Pesanan Anda telah <strong>dikonfirmasi</strong> dan barang sudah siap diambil.</p>
                         <p>Silakan segera datang untuk mengambil barang sewaan Anda.</p>
-                        <p>Terima kasih telah menggunakan layanan kami.</p>
-                        <br>
-                        <small>Subang Outdoor Team</small>
+                        <br><small>Subang Outdoor Team</small>
                     ";
                     $mail->send();
                 } catch (Exception $e) {
-                    error_log("Gagal mengirim email konfirmasi: {$mail->ErrorInfo}");
+                    error_log("Gagal kirim email: {$mail->ErrorInfo}");
                 }
             }
         }
 
-        // Jika status: disewa → kirim pengingat H-1
+        // === STOK DIKEMBALIKAN ===
+        if (strtolower($status_baru) === 'batal') {
+            $query_items = "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?";
+            $stmt_items = $koneksi->prepare($query_items);
+            $stmt_items->bind_param("i", $id);
+            $stmt_items->execute();
+            $result_items = $stmt_items->get_result();
+
+            while ($row = $result_items->fetch_assoc()) {
+                $id_barang = $row['id_barang'];
+                $jumlah = $row['jumlah_barang'];
+                $update_stok = "UPDATE barang SET stok = stok + ? WHERE id_barang = ?";
+                $stmt_update = $koneksi->prepare($update_stok);
+                $stmt_update->bind_param("ii", $jumlah, $id_barang);
+                $stmt_update->execute();
+                $stmt_update->close();
+            }
+            $stmt_items->close();
+        }
+
+        // === PENGINGAT KEMBALI H-1 ===
         if (strtolower($status_baru) === 'disewa') {
             $query = "SELECT p.email, p.nama_penyewa, t.tanggal_kembali FROM transaksi t JOIN penyewa p ON t.id_penyewa = p.id_penyewa WHERE t.id_transaksi = ?";
             $stmt = $koneksi->prepare($query);
@@ -176,19 +189,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <h3>Halo, $nama!</h3>
                             <p>Jangan lupa, barang sewaan Anda harus dikembalikan besok (<strong>{$tanggal_kembali->format('d-m-Y')}</strong>).</p>
                             <p>Pastikan untuk mengembalikannya tepat waktu agar tidak terkena denda.</p>
-                            <br>
-                            <small>Subang Outdoor Team</small>
+                            <br><small>Subang Outdoor Team</small>
                         ";
                         $mail->send();
                     } catch (Exception $e) {
-                        error_log("Gagal kirim email pengingat: {$mail->ErrorInfo}");
+                        error_log("Gagal kirim pengingat: {$mail->ErrorInfo}");
                     }
                 }
             }
         }
     }
 
-    // Redirect setelah update
     header('Location: transaksi.php?status=success');
     exit;
 } else {
