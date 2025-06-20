@@ -174,6 +174,17 @@ if (!$result_barang) {
         background-color: #e0a800;
         color: #fff !important;
       }
+      .main_menu .navbar .nav-link {
+    padding-top: 1rem;    /* Defaultnya bisa jadi 0.5rem, kita perbesar */
+    padding-bottom: 1rem;
+  }
+  .main_menu .navbar .navbar-brand {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+  .user-dropdown-toggle span {
+    margin-left: 3px; /* Sesuaikan jarak sesuai selera */
+  }
     </style>
 </head>
 <body>
@@ -217,43 +228,40 @@ if (!$result_barang) {
             >
               <a class="nav-link" href="penyewa/page/bantuan.php">Bantuan</a>
             </li>
-          </ul>
-          <ul class="nav navbar-nav navbar-right d-flex align-items-center">
             <li class="nav-item mx-2">
-              <a href="penyewa/page/keranjang.php" class="nav-link" title="Keranjang">
-                <span class="cart-icon-wrapper">
-                  <i class="fas fa-shopping-cart fa-lg"></i>
-                  <?php if ($jumlah_cart > 0): ?>
-                    <span class="cart-badge"><?= $jumlah_cart ?></span>
-                  <?php endif; ?>
-                </span>
-              </a>
+                <a href="penyewa/page/keranjang.php" class="nav-link" title="Keranjang">
+                  <span class="cart-icon-wrapper">
+                    <i class="fas fa-shopping-cart fa-lg"></i>
+                    <?php if ($jumlah_cart > 0): ?>
+                      <span class="cart-badge"><?= $jumlah_cart ?></span>
+                    <?php endif; ?>
+                  </span>
+                </a>
             </li>
             <li class="nav-item dropdown mx-2">
-              <a
-                class="nav-link dropdown-toggle d-flex align-items-center user-dropdown-toggle"
-                href="#"
-                id="navbarDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                <i class="fas fa-user-circle fa-lg"></i>
-                <span><?= htmlspecialchars($username) ?></span>
-              </a>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                <?php if (!isset($_SESSION['user_id'])): ?>
-                <a class="dropdown-item" href="login.php">Login</a>
-                <?php else: ?>
-                <a class="dropdown-item" href="penyewa/page/profil.php">Profil</a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="prosesLogin.php?logout=true">Logout</a>
-                <?php endif; ?>
-              </div>
+                <a
+                  class="nav-link dropdown-toggle d-flex align-items-center user-dropdown-toggle"
+                  href="#"
+                  id="navbarDropdown"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  <i class="fas fa-user-circle fa-lg"></i>
+                  <span><?= htmlspecialchars($username) ?></span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                  <?php if (!isset($_SESSION['user_id'])): ?>
+                  <a class="dropdown-item" href="login.php">Login</a>
+                  <?php else: ?>
+                  <a class="dropdown-item" href="penyewa/page/profil.php">Profil</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="prosesLogin.php?logout=true">Logout</a>
+                  <?php endif; ?>
+                </div>
             </li>
-          </ul>
-        </div>
+          </ul> </div>
       </div>
     </nav>
   </div>

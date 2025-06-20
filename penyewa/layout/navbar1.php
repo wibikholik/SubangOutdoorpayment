@@ -76,6 +76,17 @@ if ($id_penyewa) {
     .navbar-brand.site-brand:hover {
         color: #e0a800 !important;
     }
+     .main_menu .navbar .nav-link {
+    padding-top: 2rem;    /* Sesuaikan nilai ini jika perlu */
+    padding-bottom: 2rem;
+  }
+  .main_menu .navbar .navbar-brand {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+   .user-dropdown-toggle span {
+    margin-left: 3px; /* Anda bisa sesuaikan jarak ini (mis: 5px atau 0.5rem) */
+  }
 </style>
 
 <header class="header_area sticky-header">
@@ -103,8 +114,6 @@ if ($id_penyewa) {
                         <li class="nav-item mx-2 <?php if ($currentPage == 'bantuan.php') echo 'active'; ?>">
                             <a class="nav-link" href="../page/bantuan.php">Bantuan</a>
                         </li>
-                    </ul>
-                    <ul class="nav navbar-nav navbar-right d-flex align-items-center">
                         <li class="nav-item mx-2">
                             <a href="../page/keranjang.php" class="nav-link" title="Keranjang">
                                 <span class="cart-icon-wrapper">
@@ -115,6 +124,7 @@ if ($id_penyewa) {
                                 </span>
                             </a>
                         </li>
+                        
                         <li class="nav-item dropdown mx-2">
                             <a class="nav-link dropdown-toggle d-flex align-items-center user-dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-user-circle fa-lg"></i>
