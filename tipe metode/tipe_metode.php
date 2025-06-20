@@ -2,13 +2,14 @@
 // File: admin/metode/tipe_metode.php
 
 include '../route/koneksi.php';
-session_start();
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../../login.php");
+
+session_start();
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) ||
+    ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'owner')) {
+    header('Location: ../login.php');
     exit;
 }
-
 // Handle create
 if (isset($_POST['tambah'])) {
     $nama_tipe = trim($_POST['nama_tipe']);

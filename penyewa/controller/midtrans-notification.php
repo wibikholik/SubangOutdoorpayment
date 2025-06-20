@@ -43,27 +43,39 @@ try {
                 $status_baru = 'Pembayaran Ditolak';
                 break;
             case 'cancel':
-                $status_baru = 'Dibatalkan';
-                break;
             case 'expire':
-                // Hapus pembayaran (jika ada)
-                $stmtBayar = mysqli_prepare($koneksi, "DELETE FROM pembayaran WHERE id_transaksi = ?");
-                mysqli_stmt_bind_param($stmtBayar, "i", $id_transaksi);
-                mysqli_stmt_execute($stmtBayar);
+                // Kembalikan stok barang dulu
+                $stmtDetail = mysqli_prepare($koneksi, "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?");
+                mysqli_stmt_bind_param($stmtDetail, "i", $id_transaksi);
+                mysqli_stmt_execute($stmtDetail);
+                $resultDetail = mysqli_stmt_get_result($stmtDetail);
 
-                // Hapus detail transaksi
-                $stmtDelDetail = mysqli_prepare($koneksi, "DELETE FROM detail_transaksi WHERE id_transaksi = ?");
-                mysqli_stmt_bind_param($stmtDelDetail, "i", $id_transaksi);
-                mysqli_stmt_execute($stmtDelDetail);
+                while ($row = mysqli_fetch_assoc($resultDetail)) {
+                    $stmtStok = mysqli_prepare($koneksi, "UPDATE barang SET stok = stok + ? WHERE id_barang = ?");
+                    mysqli_stmt_bind_param($stmtStok, "ii", $row['jumlah_barang'], $row['id_barang']);
+                    mysqli_stmt_execute($stmtStok);
+                }
 
-                // Hapus transaksi utama
-                $stmtDelTrans = mysqli_prepare($koneksi, "DELETE FROM transaksi WHERE id_transaksi = ?");
-                mysqli_stmt_bind_param($stmtDelTrans, "i", $id_transaksi);
-                mysqli_stmt_execute($stmtDelTrans);
+                if ($transaction_status === 'cancel') {
+                    $status_baru = 'Batal';
+                } else {
+                    // expire: hapus pembayaran, detail, dan transaksi
+                    $stmtBayar = mysqli_prepare($koneksi, "DELETE FROM pembayaran WHERE id_transaksi = ?");
+                    mysqli_stmt_bind_param($stmtBayar, "i", $id_transaksi);
+                    mysqli_stmt_execute($stmtBayar);
 
-                http_response_code(200);
-                echo json_encode(['result' => 'expired and deleted']);
-                exit;
+                    $stmtDelDetail = mysqli_prepare($koneksi, "DELETE FROM detail_transaksi WHERE id_transaksi = ?");
+                    mysqli_stmt_bind_param($stmtDelDetail, "i", $id_transaksi);
+                    mysqli_stmt_execute($stmtDelDetail);
+
+                    $stmtDelTrans = mysqli_prepare($koneksi, "DELETE FROM transaksi WHERE id_transaksi = ?");
+                    mysqli_stmt_bind_param($stmtDelTrans, "i", $id_transaksi);
+                    mysqli_stmt_execute($stmtDelTrans);
+
+                    http_response_code(200);
+                    echo json_encode(['result' => 'expired and deleted']);
+                    exit;
+                }
                 break;
         }
 
@@ -73,7 +85,7 @@ try {
             mysqli_stmt_execute($stmtUpdate);
         }
 
-        // Jika status berubah menjadi "dikonfirmasi pembayaran silahkan ambilbarang", kurangi stok
+        // Jika status berubah menjadi "Dikonfirmasi Pembayaran Silahkan AmbilBarang", kurangi stok
         if ($status_baru === 'Dikonfirmasi Pembayaran Silahkan AmbilBarang' && $status_lama !== $status_baru) {
             $stmtDetail = mysqli_prepare($koneksi, "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?");
             mysqli_stmt_bind_param($stmtDetail, "i", $id_transaksi);

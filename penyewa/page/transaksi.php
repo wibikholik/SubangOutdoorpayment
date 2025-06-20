@@ -130,77 +130,86 @@ $result_transaksi = $stmt->get_result();
           <?php endif; ?>
 
           <div class="d-flex justify-content-between mt-3 align-items-center">
-            <div><strong>Total:</strong> Rp<?= number_format($transaksi['total_harga_sewa'], 0, ',', '.'); ?></div>
-            <div>
-              <?php if ($tipe === 'online' && strtolower($status) === 'belumbayar' && !empty($transaksi['snap_token'])): ?>
-                  <form action="pembayaran.php" method="GET" class="d-inline">
-                      <input type="hidden" name="id_transaksi" value="<?= $id_transaksi; ?>">
-                      <input type="hidden" name="token" value="<?= htmlspecialchars($transaksi['snap_token']); ?>"> 
-                      <button type="submit" class="btn btn-primary btn-sm">Bayar Sekarang</button>
-                  </form>
-              <?php elseif ($tipe === 'transfer langsung' && strtolower($status) === 'belumbayar'): ?>
-                  <a href="pembayaran_upload.php?id_transaksi=<?= $id_transaksi ?>&pilih=1" class="btn btn-sm btn-success">Upload Bukti Transfer</a>
-              <?php elseif (strtolower($status) === 'belumbayar'): ?>
-                  <span class="text-muted">Menunggu pembayaran langsung.</span>
-              <?php endif; ?>
+  <div><strong>Total:</strong> Rp<?= number_format($transaksi['total_harga_sewa'], 0, ',', '.'); ?></div>
+  <div>
+    <?php if ($tipe === 'online' && strtolower($status) === 'belumbayar' && !empty($transaksi['snap_token'])): ?>
+      <form action="pembayaran.php" method="GET" class="d-inline">
+        <input type="hidden" name="id_transaksi" value="<?= $id_transaksi; ?>">
+        <input type="hidden" name="token" value="<?= htmlspecialchars($transaksi['snap_token']); ?>"> 
+        <button type="submit" class="btn btn-primary btn-sm">Bayar Sekarang</button>
+      </form>
+    <?php elseif ($tipe === 'transfer langsung' && strtolower($status) === 'belumbayar'): ?>
+      <a href="pembayaran_upload.php?id_transaksi=<?= $id_transaksi ?>&pilih=1" class="btn btn-sm btn-success">Upload Bukti Transfer</a>
+    <?php elseif (strtolower($status) === 'belumbayar'): ?>
+      <span class="text-muted">Menunggu pembayaran langsung.</span>
+    <?php endif; ?>
 
-              <?php if (in_array(strtolower($status), ['dikonfirmasi pembayaran silahkan ambilbarang', 'dikonfirmasi (silahkan ambil barang)'])): ?>
-                <?php if ($transaksi['status_checklist'] == 0): ?>
-                  <a href="checklist.php?id_transaksi=<?= $id_transaksi ?>" class="btn btn-sm btn-warning">Form pengambilan Barang</a>
-                <?php else: ?>
-                  <span>Sudah Dicek</span>
-                <?php endif; ?>
-              <?php endif; ?>
+    <!-- Tombol Batalkan untuk transaksi yang belum dibayar -->
+    <?php if (in_array(strtolower($status), ['belumbayar', 'menunggu pembayaran', 'menunggu konfirmasi pembayaran'])): ?>
+      <form action="batal_transaksi.php" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin membatalkan transaksi ini?');">
+        <input type="hidden" name="id_transaksi" value="<?= $id_transaksi; ?>">
+        <button type="submit" class="btn btn-sm btn-outline-danger">Batalkan</button>
+      </form>
+    <?php endif; ?>
 
-              <?php if (in_array(strtolower($status), ['disewa', 'terlambat dikembalikan'])): ?>
-                <a href="pengembalian.php?id_transaksi=<?= $id_transaksi ?>" class="btn btn-sm btn-danger ms-2">Pengembalian</a>
-              <?php endif; ?>
+    <?php if (in_array(strtolower($status), ['dikonfirmasi pembayaran silahkan ambilbarang', 'dikonfirmasi (silahkan ambil barang)'])): ?>
+      <?php if ($transaksi['status_checklist'] == 0): ?>
+        <a href="checklist.php?id_transaksi=<?= $id_transaksi ?>" class="btn btn-sm btn-warning">Form pengambilan Barang</a>
+      <?php else: ?>
+        <span>Sudah Dicek</span>
+      <?php endif; ?>
+    <?php endif; ?>
 
-              <?php
-              if (strcasecmp($status, 'Ditolak Pengembalian') === 0) {
-                  $query_denda = "
-                    SELECT id_pengembalian, denda, snap_token 
-                    FROM pengembalian 
-                    WHERE id_transaksi = ? 
-                    ORDER BY id_pengembalian DESC LIMIT 1
-                  ";
-                  $stmt_denda = $koneksi->prepare($query_denda);
+    <?php if (in_array(strtolower($status), ['disewa', 'terlambat dikembalikan'])): ?>
+      <a href="pengembalian.php?id_transaksi=<?= $id_transaksi ?>" class="btn btn-sm btn-danger ms-2">Pengembalian</a>
+    <?php endif; ?>
 
-                  if ($stmt_denda) {
-                      $stmt_denda->bind_param("i", $id_transaksi);
-                      $stmt_denda->execute();
-                      $result_denda = $stmt_denda->get_result();
+    <?php
+    if (strcasecmp($status, 'Ditolak Pengembalian') === 0) {
+        $query_denda = "
+          SELECT id_pengembalian, denda, snap_token 
+          FROM pengembalian 
+          WHERE id_transaksi = ? 
+          ORDER BY id_pengembalian DESC LIMIT 1
+        ";
+        $stmt_denda = $koneksi->prepare($query_denda);
 
-                      if ($result_denda && $row_denda = $result_denda->fetch_assoc()) {
-                          $denda = (float) $row_denda['denda'];
-                          $snap_token_denda = $row_denda['snap_token'];
-                          $id_pengembalian = $row_denda['id_pengembalian'];
+        if ($stmt_denda) {
+            $stmt_denda->bind_param("i", $id_transaksi);
+            $stmt_denda->execute();
+            $result_denda = $stmt_denda->get_result();
 
-                          if ($denda < 0 || $denda > 1000000) {
-                              $denda = 0;
-                          }
+            if ($result_denda && $row_denda = $result_denda->fetch_assoc()) {
+                $denda = (float) $row_denda['denda'];
+                $snap_token_denda = $row_denda['snap_token'];
+                $id_pengembalian = $row_denda['id_pengembalian'];
 
-                          if ($denda > 0 && $snap_token_denda && $id_pengembalian) {
-                              ?>
-                             <form action="pembayaran_denda.php" method="GET" class="d-inline">
-                              <input type="hidden" name="id_pengembalian" value="<?= htmlspecialchars($id_pengembalian); ?>">
-                              <button type="submit" class="btn btn-sm btn-danger ms-2">
-                                  Bayar Denda: Rp<?= number_format($denda, 0, ',', '.'); ?>
-                              </button>
-                          </form>
-                              <?php
-                          } else {
-                              echo '<span class="text-danger ms-2">Token pembayaran denda belum tersedia.</span>';
-                          }
-                      } else {
-                          echo '<span class="text-muted ms-2">Data denda tidak ditemukan.</span>';
-                      }
-                      $stmt_denda->close();
-                  }
-              }
-              ?>
-            </div>
-          </div>
+                if ($denda < 0 || $denda > 1000000) {
+                    $denda = 0;
+                }
+
+                if ($denda > 0 && $snap_token_denda && $id_pengembalian) {
+                    ?>
+                    <form action="pembayaran_denda.php" method="GET" class="d-inline">
+                      <input type="hidden" name="id_pengembalian" value="<?= htmlspecialchars($id_pengembalian); ?>">
+                      <button type="submit" class="btn btn-sm btn-danger ms-2">
+                          Bayar Denda: Rp<?= number_format($denda, 0, ',', '.'); ?>
+                      </button>
+                    </form>
+                    <?php
+                } else {
+                    echo '<span class="text-danger ms-2">Token pembayaran denda belum tersedia.</span>';
+                }
+            } else {
+                echo '<span class="text-muted ms-2">Data denda tidak ditemukan.</span>';
+            }
+            $stmt_denda->close();
+        }
+    }
+    ?>
+  </div>
+</div>
+
         </div>
       </div>
 

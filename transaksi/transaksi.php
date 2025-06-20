@@ -67,7 +67,8 @@ $allowed_status_updates = [
     'ditolak pembayaran' => 'Ditolak Pembayaran',
     'disewa' => 'Disewa',
     'terlambat dikembalikan' => 'Terlambat Dikembalikan',
-    'selesai dikembalikan' => 'Selesai Dikembalikan'
+    'selesai dikembalikan' => 'Selesai Dikembalikan',
+    'batal' => 'Batal'
 ];
 
 ?>

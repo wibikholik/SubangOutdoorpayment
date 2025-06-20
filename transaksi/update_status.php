@@ -199,6 +199,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+    if (strtolower($status_baru) === 'batal') {
+    // Cek status transaksi sebelumnya
+    $sql_cek = "SELECT status FROM transaksi WHERE id_transaksi = ?";
+    $stmt_cek = $koneksi->prepare($sql_cek);
+    $stmt_cek->bind_param("i", $id);
+    $stmt_cek->execute();
+    $result_cek = $stmt_cek->get_result();
+    $data_cek = $result_cek->fetch_assoc();
+    $stmt_cek->close();
+
+    if ($data_cek && strtolower($data_cek['status']) !== 'batal') {
+        // Jika status sebelumnya bukan batal, maka kembalikan stok
+        $query_items = "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?";
+        $stmt_items = $koneksi->prepare($query_items);
+        $stmt_items->bind_param("i", $id);
+        $stmt_items->execute();
+        $result_items = $stmt_items->get_result();
+
+        while ($row = $result_items->fetch_assoc()) {
+            $id_barang = $row['id_barang'];
+            $jumlah = $row['jumlah_barang'];
+            $update_stok = "UPDATE barang SET stok = stok + ? WHERE id_barang = ?";
+            $stmt_update = $koneksi->prepare($update_stok);
+            $stmt_update->bind_param("ii", $jumlah, $id_barang);
+            $stmt_update->execute();
+            $stmt_update->close();
+        }
+        $stmt_items->close();
+    }
+}
+
 
     header('Location: transaksi.php?status=success');
     exit;
