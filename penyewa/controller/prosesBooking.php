@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Ambil data form
 $id_tipe = $_POST['id_tipe'] ?? null;
-$selected_items = $_POST['items'] ?? []; // Format: [id_cart => jumlah_dipesan]
+$selected_items = $_POST['items'] ?? []; // Format: [id_cart => ['id_barang' => ..., 'jumlah' => ..., 'harga' => ...]]
 $tanggal_sewa = $_POST['tanggal_sewa'] ?? null;
 $tanggal_kembali = $_POST['tanggal_kembali'] ?? null;
 
@@ -57,7 +57,7 @@ $selected_ids_int = array_map('intval', $selected_ids);
 $placeholders = implode(',', array_fill(0, count($selected_ids_int), '?'));
 
 // Ambil data barang di cart sesuai user dan id_cart yang dipilih
-$sql = "SELECT c.id AS cart_id, c.id_barang, c.jumlah AS stok, b.harga_sewa AS harga
+$sql = "SELECT c.id AS cart_id, c.id_barang, c.jumlah AS jumlah_cart, b.harga_sewa AS harga
         FROM carts c
         JOIN barang b ON c.id_barang = b.id_barang
         WHERE c.id_penyewa = ? AND c.id IN ($placeholders)";
@@ -137,38 +137,40 @@ try {
     $total_harga = 0;
     foreach ($selected_ids_int as $cart_id) {
         $item = $items_db[$cart_id];
-        $jumlah_pilih = (int)$selected_items[$cart_id];
-        if ($jumlah_pilih <= 0 || $jumlah_pilih > $item['stok']) {
+        $jumlah_pilih = (int)$selected_items[$cart_id]['jumlah'];
+        // Validasi jumlah tidak boleh lebih besar dari jumlah di cart
+        if ($jumlah_pilih <= 0 || $jumlah_pilih > $item['jumlah_cart']) {
             throw new Exception("Jumlah barang tidak valid untuk cart ID: $cart_id");
         }
         $total_harga += $item['harga'] * $jumlah_pilih * $lama_sewa;
     }
 
-    if ($id_metode === null) {
-        // Insert tanpa id_metode (NULL)
-        $stmtTransaksi = mysqli_prepare($koneksi, "INSERT INTO transaksi (id_penyewa, total_harga_sewa, status, id_metode, tanggal_sewa, tanggal_kembali, id_tipe) VALUES (?, ?, ?, NULL, ?, ?, ?)");
-        if (!$stmtTransaksi) {
-            throw new Exception("Prepare transaksi gagal: " . mysqli_error($koneksi));
-        }
-        mysqli_stmt_bind_param($stmtTransaksi, "idsssi", $id_penyewa, $total_harga, $status_transaksi, $tanggal_sewa, $tanggal_kembali, $id_tipe);
+    // Escape data agar aman dari SQL Injection
+    $status_transaksi_esc = mysqli_real_escape_string($koneksi, $status_transaksi);
+    $tanggal_sewa_esc = mysqli_real_escape_string($koneksi, $tanggal_sewa);
+    $tanggal_kembali_esc = mysqli_real_escape_string($koneksi, $tanggal_kembali);
 
+    // Insert transaksi tanpa bind_param untuk memastikan status tersimpan string
+    if ($id_metode === null) {
+        $query = "INSERT INTO transaksi (id_penyewa, total_harga_sewa, status, id_metode, tanggal_sewa, tanggal_kembali, id_tipe)
+                  VALUES ($id_penyewa, $total_harga, '$status_transaksi_esc', NULL, '$tanggal_sewa_esc', '$tanggal_kembali_esc', $id_tipe)";
     } else {
-        // Insert dengan id_metode
-        $stmtTransaksi = mysqli_prepare($koneksi, "INSERT INTO transaksi (id_penyewa, total_harga_sewa, status, id_metode, tanggal_sewa, tanggal_kembali, id_tipe) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        if (!$stmtTransaksi) {
-            throw new Exception("Prepare transaksi gagal: " . mysqli_error($koneksi));
-        }
-        mysqli_stmt_bind_param($stmtTransaksi, "idsissi", $id_penyewa, $total_harga, $status_transaksi, $id_metode, $tanggal_sewa, $tanggal_kembali, $id_tipe);
+        $query = "INSERT INTO transaksi (id_penyewa, total_harga_sewa, status, id_metode, tanggal_sewa, tanggal_kembali, id_tipe)
+                  VALUES ($id_penyewa, $total_harga, '$status_transaksi_esc', $id_metode, '$tanggal_sewa_esc', '$tanggal_kembali_esc', $id_tipe)";
     }
-    mysqli_stmt_execute($stmtTransaksi);
+
+    $res = mysqli_query($koneksi, $query);
+    if (!$res) {
+        throw new Exception("Query insert transaksi gagal: " . mysqli_error($koneksi));
+    }
     $id_transaksi = mysqli_insert_id($koneksi);
 
-    // Insert detail transaksi
+    // Insert detail transaksi pakai prepared statement (bisa pakai bind_param)
     $stmtDetail = mysqli_prepare($koneksi, "INSERT INTO detail_transaksi (id_transaksi, id_barang, jumlah_barang, harga_satuan) VALUES (?, ?, ?, ?)");
     foreach ($selected_ids_int as $cart_id) {
         $item = $items_db[$cart_id];
         $id_barang = (int)$item['id_barang'];
-        $jumlah = (int)$selected_items[$cart_id];
+        $jumlah = (int)$selected_items[$cart_id]['jumlah'];
         $harga = (float)$item['harga'];
         mysqli_stmt_bind_param($stmtDetail, "iiid", $id_transaksi, $id_barang, $jumlah, $harga);
         mysqli_stmt_execute($stmtDetail);
@@ -217,7 +219,7 @@ try {
         $item_details = [];
         foreach ($selected_ids_int as $cart_id) {
             $item = $items_db[$cart_id];
-            $jumlah = (int)$selected_items[$cart_id];
+            $jumlah = (int)$selected_items[$cart_id]['jumlah'];
             $item_details[] = [
                 'id' => (string)$cart_id,
                 'price' => (float)$item['harga'],

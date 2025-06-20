@@ -132,9 +132,9 @@ if (session_status() === PHP_SESSION_NONE) {
                                 <div class="col-lg-4 col-md-6 mb-4">
                                     <div class="product-card">
                                         <div class="product-img-container">
-                                            <a href="detail_produk.php?id=<?= $row['id_barang'] ?>">
+                                         
                                                 <img class="img-fluid" src="../../barang/barang/gambar/<?= htmlspecialchars($row['gambar']); ?>" alt="<?= htmlspecialchars($row['nama_barang']); ?>">
-                                            </a>
+                                            
                                         </div>
                                         <div class="product-details">
                                             <h6><?= htmlspecialchars($row['nama_barang']); ?></h6>

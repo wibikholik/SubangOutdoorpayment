@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$id_penyewa = $_SESSION['user_id'];
+$id_penyewa = (int)$_SESSION['user_id'];
 
 $selected_ids = isset($_POST['selected_items']) && is_array($_POST['selected_items']) ? $_POST['selected_items'] : [];
 $jumlah_items = isset($_POST['jumlah']) && is_array($_POST['jumlah']) ? $_POST['jumlah'] : [];
@@ -16,24 +16,26 @@ if (empty($selected_ids)) {
     die("Tidak ada item yang dipilih.");
 }
 
+// Update jumlah di tabel carts sesuai input user (gunakan prepared statement)
 $stmt_update = $koneksi->prepare("UPDATE carts SET jumlah = ? WHERE id = ? AND id_penyewa = ?");
 foreach ($selected_ids as $cart_id) {
     $cart_id_int = (int)$cart_id;
     $jumlah_baru = isset($jumlah_items[$cart_id]) ? (int)$jumlah_items[$cart_id] : 1;
     if ($jumlah_baru < 1) $jumlah_baru = 1;
-    $stmt_update->bind_param("iis", $jumlah_baru, $cart_id_int, $id_penyewa);
+    $stmt_update->bind_param("iii", $jumlah_baru, $cart_id_int, $id_penyewa);
     $stmt_update->execute();
 }
 $stmt_update->close();
 
 $id_list = implode(',', array_map('intval', $selected_ids));
 
-$sql_carts = "SELECT carts.id, carts.id_barang, barang.gambar, barang.nama_barang, carts.jumlah, carts.harga
+// Ambil data cart dengan harga satuan dari barang
+$sql_carts = "SELECT carts.id, carts.id_barang, barang.gambar, barang.nama_barang, carts.jumlah, barang.harga_sewa AS harga
               FROM carts
               JOIN barang ON carts.id_barang = barang.id_barang
               WHERE carts.id_penyewa = ? AND carts.id IN ($id_list)";
 $stmt_carts = $koneksi->prepare($sql_carts);
-$stmt_carts->bind_param("s", $id_penyewa);
+$stmt_carts->bind_param("i", $id_penyewa);
 $stmt_carts->execute();
 $result_carts = $stmt_carts->get_result();
 
@@ -41,23 +43,20 @@ if (!$result_carts) {
     die("Query error: " . $koneksi->error);
 }
 
+// Ambil data penyewa
 $stmt_penyewa = $koneksi->prepare("SELECT nama_penyewa, no_hp, alamat FROM penyewa WHERE id_penyewa = ?");
-$stmt_penyewa->bind_param("s", $id_penyewa);
+$stmt_penyewa->bind_param("i", $id_penyewa);
 $stmt_penyewa->execute();
 $result_penyewa = $stmt_penyewa->get_result();
 $penyewa = $result_penyewa->fetch_assoc();
 $stmt_penyewa->close();
 
+// Ambil tipe metode pembayaran
 $tipe_metode = [];
-$sql = "SELECT tm.id_tipe, tm.nama_tipe
-        FROM tipe_metode tm
-        ORDER BY tm.nama_tipe ASC";
+$sql = "SELECT id_tipe, nama_tipe FROM tipe_metode ORDER BY nama_tipe ASC";
 $result = $koneksi->query($sql);
 while ($row = $result->fetch_assoc()) {
-    $id_tipe = $row['id_tipe'];
-    $tipe_metode[$id_tipe] = [
-        'nama_tipe' => $row['nama_tipe']
-    ];
+    $tipe_metode[$row['id_tipe']] = $row['nama_tipe'];
 }
 ?>
 
@@ -123,13 +122,13 @@ while ($row = $result->fetch_assoc()) {
                             <div class="pesanan-item d-flex align-items-center gap-3 mb-3">
                                 <img src="../../barang/barang/gambar/<?= htmlspecialchars($item['gambar']) ?>" alt="<?= htmlspecialchars($item['nama_barang']) ?>" style="height:80px; flex-shrink:0;">
                                 <div class="pesanan-detail">
-                                    <strong><?= htmlspecialchars($item['nama_barang']) ?> (<?= (int)$item['jumlah'] ?>)</strong>
+                                    <strong><?= htmlspecialchars($item['nama_barang']) ?></strong>
                                     <div>Harga/hari: Rp <?= number_format($item['harga'], 0, ',', '.') ?></div>
                                     <div id="subtotal-<?= (int)$item['id'] ?>">Subtotal: Rp 0</div>
                                 </div>
 
                                 <input type="hidden" name="items[<?= (int)$item['id'] ?>][id_barang]" value="<?= (int)$item['id_barang'] ?>">
-                                <input type="hidden" name="items[<?= (int)$item['id'] ?>][jumlah]" value="<?= (int)$item['jumlah'] ?>">
+                                <input type="number" name="items[<?= (int)$item['id'] ?>][jumlah]" min="1" value="<?= (int)$item['jumlah'] ?>" class="form-control jumlah-input" style="width:80px;" />
                                 <input type="hidden" name="items[<?= (int)$item['id'] ?>][harga]" value="<?= (int)$item['harga'] ?>">
                             </div>
                         <?php endforeach; ?>
@@ -145,11 +144,11 @@ while ($row = $result->fetch_assoc()) {
                         <h4>Metode Pembayaran (Tipe Metode)</h4>
                         <?php
                         $first = true;
-                        foreach ($tipe_metode as $id_tipe => $data) :
+                        foreach ($tipe_metode as $id_tipe => $nama_tipe) :
                         ?>
-                            <label class="me-3" style="cursor:pointer;" title="<?= htmlspecialchars($data['nama_tipe']) ?>">
+                            <label class="me-3" style="cursor:pointer;" title="<?= htmlspecialchars($nama_tipe) ?>">
                                 <input type="radio" name="id_tipe" value="<?= $id_tipe ?>" <?= $first ? 'checked' : '' ?> required />
-                                <span><?= htmlspecialchars($data['nama_tipe']) ?></span>
+                                <span><?= htmlspecialchars($nama_tipe) ?></span>
                             </label>
                         <?php
                             $first = false;
@@ -202,7 +201,14 @@ while ($row = $result->fetch_assoc()) {
 
                 let totalBayar = 0;
                 cartItems.forEach(function(item) {
-                    const subtotal = hariSewa * item.harga * item.jumlah;
+                    // Ambil jumlah dari input yang user ubah
+                    let jumlahInput = $(`input[name="items[${item.id}][jumlah]"]`);
+                    let jumlah = parseInt(jumlahInput.val());
+                    if (isNaN(jumlah) || jumlah < 1) {
+                        jumlah = 1;
+                        jumlahInput.val(jumlah);
+                    }
+                    const subtotal = hariSewa * item.harga * jumlah;
                     $('#subtotal-' + item.id).text("Subtotal: Rp " + subtotal.toLocaleString('id-ID'));
                     totalBayar += subtotal;
                 });
@@ -212,6 +218,7 @@ while ($row = $result->fetch_assoc()) {
             }
 
             $('#tanggal_sewa, #tanggal_kembali').on('change', updateTotalBayar);
+            $('.jumlah-input').on('change', updateTotalBayar);
 
             function validateDates() {
                 const tglSewa = $('#tanggal_sewa').val();
