@@ -291,9 +291,9 @@ if (!$result_barang) {
         <?php while ($row = mysqli_fetch_assoc($result_barang)): ?>
           <div class="col-lg-3 col-md-6 mb-4">
             <div class="product-card">
-              <a href="penyewa/page/detail_produk.php?id=<?= $row['id_barang'] ?>">
+             
                 <img src="barang/barang/gambar/<?= htmlspecialchars($row['gambar']); ?>" class="card-img-top" alt="<?= htmlspecialchars($row['nama_barang']); ?>" />
-              </a>
+            
               <div class="card-body">
                 <h5 class="card-title"><?= htmlspecialchars($row['nama_barang']); ?></h5>
                 <p class="card-text">Rp <?= number_format($row['harga_sewa'], 0, ',', '.'); ?> / hari</p>
