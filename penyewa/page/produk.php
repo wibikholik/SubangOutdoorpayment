@@ -23,44 +23,214 @@ if (session_status() === PHP_SESSION_NONE) {
     <link rel="stylesheet" href="css/nouislider.min.css">
     <link rel="stylesheet" href="css/main.css">
     
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-        .filter-bar {
-            background: #ffffff; padding: 15px 20px; border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.07); margin-bottom: 30px;
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8f9fa;
+    }
+
+    .filter-bar {
+        background: #ffffff;
+        padding: 15px 20px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+        margin-bottom: 30px;
+    }
+
+    .nice-select {
+        border-radius: 50px;
+        border-color: #e0e0e0;
+        font-weight: 600;
+    }
+
+    .product-card {
+        background: #fff;
+        border-radius: 12px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-card .product-img-container {
+        height: 250px;
+        overflow: hidden;
+    }
+
+    .product-card .product-img-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .product-card .product-details {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-card .product-details h6 {
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 10px;
+        flex-grow: 1;
+    }
+
+    .product-card .price {
+        margin-top: auto;
+        margin-bottom: 15px;
+    }
+
+    .product-card .price h6 {
+        font-size: 18px;
+        color: #fab700;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    /* Tombol booking ramping dan responsif */
+    .primary-btn {
+    background: linear-gradient(45deg, #fbb034, #ffdd00);
+    border: none;
+    color: #fff !important;
+    padding: 6px 16px;          /* lebih ramping */
+    border-radius: 25px;        /* sedikit lebih kecil */
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    width: auto;               /* jangan full width */
+    min-width: 120px;
+    text-align: center;
+    font-size: 14px;
+    margin: 10px 0 0 0;        /* beri jarak atas */
+    box-shadow: 0 4px 8px rgba(251,176,52,0.4);
+}
+
+.primary-btn:hover {
+    background: linear-gradient(45deg, #e0a800, #fab700);
+    color: #fff !important;
+    box-shadow: 0 6px 12px rgba(224,168,0,0.5);
+}
+
+/* Responsive khusus HP */
+@media (max-width: 575.98px) {
+    .primary-btn {
+        padding: 5px 14px;
+        font-size: 13px;
+        min-width: 100px;
+        border-radius: 22px;
+        margin: 8px 0 0 0;
+        box-shadow: 0 3px 7px rgba(251,176,52,0.35);
+    }
+}
+
+
+    .sidebar-widget {
+        background: #fff;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+    }
+
+    .sidebar-widget h3 {
+        font-size: 20px;
+        font-weight: 700;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+
+    .unggulan-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        text-decoration: none;
+    }
+
+    .unggulan-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .unggulan-item img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        margin-right: 15px;
+        border-radius: 8px;
+    }
+
+    .unggulan-item .info .nama-barang {
+        font-weight: 600;
+        color: #333;
+        display: block;
+        transition: color 0.3s ease;
+    }
+
+    .unggulan-item:hover .info .nama-barang {
+        color: #fab700;
+    }
+
+    .unggulan-item .info .harga {
+        font-weight: bold;
+        color: #6c757d;
+    }
+
+    .sticky-sidebar {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 110px;
+    }
+
+    /* Responsive product layout: 
+       2 produk per baris di layar kecil, 
+       3 produk per baris di tablet dan desktop */
+    @media (max-width: 575.98px) {
+        .category-list .row > div {
+            flex: 0 0 50%;
+            max-width: 50%;
+            padding-left: 10px;
+            padding-right: 10px;
+            margin-bottom: 20px;
         }
-        .nice-select { border-radius: 50px; border-color: #e0e0e0; font-weight: 600; }
-        .product-card {
-            background: #fff; border-radius: 12px; border: none; overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.07); transition: all 0.3s ease;
-            display: flex; flex-direction: column; height: 100%;
+        .product-card .product-img-container {
+            height: 180px;
         }
-        .product-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
-        .product-card .product-img-container { height: 250px; overflow: hidden; }
-        .product-card .product-img-container img { width: 100%; height: 100%; object-fit: cover; }
-        .product-card .product-details { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
-        .product-card .product-details h6 { font-weight: 600; font-size: 16px; margin-bottom: 10px; flex-grow: 1; }
-        .product-card .price { margin-top: auto; margin-bottom: 15px; }
-        .product-card .price h6 { font-size: 18px; color: #fab700; font-weight: 700; margin-bottom: 0; }
+        .product-card .product-details h6 {
+            font-size: 14px;
+        }
+        .product-card .price h6 {
+            font-size: 16px;
+        }
         .primary-btn {
-            background-color: #fab700; border: none; color: #fff !important; padding: 10px 20px;
-            border-radius: 50px; font-weight: 700; cursor: pointer; text-decoration: none;
-            display: inline-block; transition: all 0.3s ease; width: 100%; text-align: center;
+            padding: 5px 10px;
+            font-size: 13px;
+            min-width: 100px;
         }
-        .primary-btn:hover { background-color: #e0a800; color: #fff !important; }
-        .sidebar-widget {
-            background: #fff; padding: 25px; border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.07);
+    }
+
+    @media (min-width: 576px) {
+        .category-list .row > div {
+            flex: 0 0 33.3333%;
+            max-width: 33.3333%;
+            padding-left: 10px;
+            padding-right: 10px;
+            margin-bottom: 30px;
         }
-        .sidebar-widget h3 { font-size: 20px; font-weight: 700; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
-        .unggulan-item { display: flex; align-items: center; margin-bottom: 20px; text-decoration: none; }
-        .unggulan-item:last-child { margin-bottom: 0; }
-        .unggulan-item img { width: 60px; height: 60px; object-fit: cover; margin-right: 15px; border-radius: 8px; }
-        .unggulan-item .info .nama-barang { font-weight: 600; color: #333; display: block; transition: color 0.3s ease; }
-        .unggulan-item:hover .info .nama-barang { color: #fab700; }
-        .unggulan-item .info .harga { font-weight: bold; color: #6c757d; }
-        .sticky-sidebar { position: -webkit-sticky; position: sticky; top: 110px; }
-    </style>
+    }
+</style>
+
+
 </head>
 
 <body id="category">
@@ -126,33 +296,35 @@ if (session_status() === PHP_SESSION_NONE) {
                 </div>
 
                 <section class="lattest-product-area category-list">
-                    <div class="row">
-                        <?php if ($result->num_rows > 0): ?>
-                            <?php while ($row = mysqli_fetch_assoc($result)): ?>
-                                <div class="col-lg-4 col-md-6 mb-4">
-                                    <div class="product-card">
-                                        <div class="product-img-container">
-                                         
-                                                <img class="img-fluid" src="../../barang/barang/gambar/<?= htmlspecialchars($row['gambar']); ?>" alt="<?= htmlspecialchars($row['nama_barang']); ?>">
-                                            
-                                        </div>
-                                        <div class="product-details">
-                                            <h6><?= htmlspecialchars($row['nama_barang']); ?></h6>
-                                             <h6>Stok: <?= htmlspecialchars($row['stok']); ?></h6>
-                                            <div class="price">
-                                                <h6>Rp <?= number_format($row['harga_sewa'], 0, ',', '.'); ?>/hari</h6>
-                                            </div>
-                                            <button type="button" class="primary-btn" data-toggle="modal" data-target="#keranjangModal<?= $row['id_barang']; ?>">
-                                                <i class="fas fa-cart-plus mr-2"></i>Booking Sekarang
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <div class="col-12"><p class='text-center alert alert-warning'>Tidak ada produk yang ditemukan.</p></div>
-                        <?php endif; ?>
-                    </div>
+                    <section class="lattest-product-area category-list">
+  <div class="row g-3">
+    <?php if ($result->num_rows > 0): ?>
+      <?php while ($row = mysqli_fetch_assoc($result)): ?>
+       <div class="col-6 col-md-4 mb-4 d-flex">
+
+          <div class="product-card w-100">
+            <div class="product-img-container">
+              <img class="img-fluid" src="../../barang/barang/gambar/<?= htmlspecialchars($row['gambar']); ?>" alt="<?= htmlspecialchars($row['nama_barang']); ?>">
+            </div>
+            <div class="product-details">
+              <h6><?= htmlspecialchars($row['nama_barang']); ?></h6>
+              <h6>Stok: <?= htmlspecialchars($row['stok']); ?></h6>
+              <div class="price">
+                <h6>Rp <?= number_format($row['harga_sewa'], 0, ',', '.'); ?>/hari</h6>
+              </div>
+              <button type="button" class="primary-btn" data-toggle="modal" data-target="#keranjangModal<?= $row['id_barang']; ?>">
+                <i class="fas fa-cart-plus mr-2"></i>Booking Sekarang
+              </button>
+            </div>
+          </div>
+        </div>
+      <?php endwhile; ?>
+    <?php else: ?>
+      <div class="col-12"><p class='text-center alert alert-warning'>Tidak ada produk yang ditemukan.</p></div>
+    <?php endif; ?>
+  </div>
+</section>
+
                 </section>
             </div>
 

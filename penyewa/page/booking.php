@@ -78,7 +78,118 @@ while ($row = $result->fetch_assoc()) {
     <link rel="stylesheet" href="css/main.css" />
     <link rel="shortcut icon" href="../../assets/img/logo.jpg" />
 </head>
+<style>
+    /* Container utama form checkout */
+.checkout_area .container {
+  padding: 2rem 1rem;
+}
 
+/* Styling tiap item pesanan */
+.pesanan-item {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  transition: box-shadow 0.3s ease;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pesanan-item:hover {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+/* Gambar barang */
+.pesanan-item img {
+  max-height: 80px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+/* Detail teks produk */
+.pesanan-detail strong {
+  font-size: 1.1rem;
+  margin-bottom: 0.3rem;
+  display: block;
+}
+
+.pesanan-detail div {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Input jumlah */
+.pesanan-item input.jumlah-input {
+  width: 80px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  text-align: center;
+  transition: border-color 0.3s ease;
+}
+
+.pesanan-item input.jumlah-input:focus {
+  border-color: #495057;
+  outline: none;
+}
+
+/* Container form kanan */
+.checkout_area form > .row > div:last-child {
+  background-color: #f9f9f9;
+  padding: 1.5rem 1.2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Label form */
+.checkout_area label {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+/* Tombol submit */
+.checkout_area button[type="submit"] {
+  padding: 12px;
+  font-size: 1.1rem;
+  border-radius: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.checkout_area button[type="submit"]:hover {
+  background-color: #222;
+  color: #fff;
+}
+
+/* Total bayar */
+#total_bayar_display {
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .pesanan-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pesanan-item img {
+    margin-bottom: 0.7rem;
+  }
+
+  .pesanan-item input.jumlah-input {
+    width: 100%;
+  }
+}
+
+</style>
 <body>
 
     <?php include("../layout/navbar1.php") ?>
@@ -116,52 +227,73 @@ while ($row = $result->fetch_assoc()) {
             <?php if ($result_carts->num_rows > 0) :
                 $cart_items = $result_carts->fetch_all(MYSQLI_ASSOC);
             ?>
-                <form action="../controller/prosesBooking.php" method="post" id="checkout-form" class="d-flex gap-4 align-items-start" onsubmit="return validateDates()">
-                    <div style="flex: 0 0 700px; max-width: 700px;">
-                        <?php foreach ($cart_items as $item) : ?>
-                            <div class="pesanan-item d-flex align-items-center gap-3 mb-3">
-                                <img src="../../barang/barang/gambar/<?= htmlspecialchars($item['gambar']) ?>" alt="<?= htmlspecialchars($item['nama_barang']) ?>" style="height:80px; flex-shrink:0;">
-                                <div class="pesanan-detail">
-                                    <strong><?= htmlspecialchars($item['nama_barang']) ?></strong>
-                                    <div>Harga/hari: Rp <?= number_format($item['harga'], 0, ',', '.') ?></div>
-                                    <div id="subtotal-<?= (int)$item['id'] ?>">Subtotal: Rp 0</div>
-                                </div>
+                <form action="../controller/prosesBooking.php" method="post" id="checkout-form" onsubmit="return validateDates()">
+  <div class="row">
+    <div class="col-lg-8 col-md-7 col-12">
+      <?php foreach ($cart_items as $item) : ?>
+        <div class="d-flex align-items-center gap-3 mb-3 border p-3 rounded">
+          <img src="../../barang/barang/gambar/<?= htmlspecialchars($item['gambar']) ?>" 
+               alt="<?= htmlspecialchars($item['nama_barang']) ?>" 
+               class="img-fluid" style="max-height:80px; width:auto; flex-shrink:0;">
+          <div class="flex-grow-1">
+            <strong><?= htmlspecialchars($item['nama_barang']) ?></strong>
+            <div>Harga/hari: Rp <?= number_format($item['harga'], 0, ',', '.') ?></div>
+            <div id="subtotal-<?= (int)$item['id'] ?>">Subtotal: Rp 0</div>
+          </div>
 
-                                <input type="hidden" name="items[<?= (int)$item['id'] ?>][id_barang]" value="<?= (int)$item['id_barang'] ?>">
-                                <input type="number" name="items[<?= (int)$item['id'] ?>][jumlah]" min="1" value="<?= (int)$item['jumlah'] ?>" class="form-control jumlah-input" style="width:80px;" />
-                                <input type="hidden" name="items[<?= (int)$item['id'] ?>][harga]" value="<?= (int)$item['harga'] ?>">
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
+          <div style="width: 90px;">
+            <input type="hidden" name="items[<?= (int)$item['id'] ?>][id_barang]" value="<?= (int)$item['id_barang'] ?>">
+            <input type="number" 
+                   name="items[<?= (int)$item['id'] ?>][jumlah]" 
+                   min="1" 
+                   value="<?= (int)$item['jumlah'] ?>" 
+                   class="form-control jumlah-input" 
+                   required 
+                   aria-label="Jumlah <?= htmlspecialchars($item['nama_barang']) ?>" />
+            <input type="hidden" name="items[<?= (int)$item['id'] ?>][harga]" value="<?= (int)$item['harga'] ?>">
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
 
-                    <div style="min-width: 300px;">
-                        <label for="tanggal_sewa" class="fw-bold fs-6">Sewa:</label>
-                        <input type="date" id="tanggal_sewa" name="tanggal_sewa" class="form-control mb-3" required min="<?= date('Y-m-d') ?>" />
+    <div class="col-lg-4 col-md-5 col-12">
+      <div class="mb-3">
+        <label for="tanggal_sewa" class="form-label fw-bold">Sewa:</label>
+        <input type="date" id="tanggal_sewa" name="tanggal_sewa" class="form-control" required min="<?= date('Y-m-d') ?>" />
+      </div>
 
-                        <label for="tanggal_kembali" class="fw-bold fs-6">Kembali:</label>
-                        <input type="date" id="tanggal_kembali" name="tanggal_kembali" class="form-control mb-3" required min="<?= date('Y-m-d') ?>" />
+      <div class="mb-3">
+        <label for="tanggal_kembali" class="form-label fw-bold">Kembali:</label>
+        <input type="date" id="tanggal_kembali" name="tanggal_kembali" class="form-control" required min="<?= date('Y-m-d') ?>" />
+      </div>
 
-                        <h4>Metode Pembayaran (Tipe Metode)</h4>
-                        <?php
-                        $first = true;
-                        foreach ($tipe_metode as $id_tipe => $nama_tipe) :
-                        ?>
-                            <label class="me-3" style="cursor:pointer;" title="<?= htmlspecialchars($nama_tipe) ?>">
-                                <input type="radio" name="id_tipe" value="<?= $id_tipe ?>" <?= $first ? 'checked' : '' ?> required />
-                                <span><?= htmlspecialchars($nama_tipe) ?></span>
-                            </label>
-                        <?php
-                            $first = false;
-                        endforeach;
-                        ?>
+      <h5>Metode Pembayaran (Tipe Metode)</h5>
+      <div class="mb-3 d-flex flex-wrap gap-3">
+        <?php
+        $first = true;
+        foreach ($tipe_metode as $id_tipe => $nama_tipe) :
+        ?>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="id_tipe" id="tipe-<?= $id_tipe ?>" value="<?= $id_tipe ?>" <?= $first ? 'checked' : '' ?> required />
+            <label class="form-check-label" for="tipe-<?= $id_tipe ?>" title="<?= htmlspecialchars($nama_tipe) ?>">
+              <?= htmlspecialchars($nama_tipe) ?>
+            </label>
+          </div>
+        <?php
+          $first = false;
+        endforeach;
+        ?>
+      </div>
 
-                        <h4>Total Bayar</h4>
-                        <div id="total_bayar_display" class="fw-bold fs-5 mb-3">Rp 0</div>
-                        <input type="hidden" id="total_harga_sewa" name="total_harga_sewa" value="0" />
+      <h5>Total Bayar</h5>
+      <div id="total_bayar_display" class="fw-bold fs-5 mb-3">Rp 0</div>
+      <input type="hidden" id="total_harga_sewa" name="total_harga_sewa" value="0" />
 
-                        <button type="submit" class="btn btn-dark">Konfirmasi</button>
-                    </div>
-                </form>
+      <button type="submit" class="btn btn-dark w-100">Konfirmasi</button>
+    </div>
+  </div>
+</form>
+
             <?php else : ?>
                 <p>Tidak ada item di keranjang Anda.</p>
             <?php endif; ?>
