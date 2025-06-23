@@ -9,6 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 <html lang="id" class="no-js">
 <head>
     <meta charset="UTF-8">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="shortcut icon" href="../../assets/img/logo.jpg">
     <title>Produk - Subang Outdoor</title>
@@ -21,7 +22,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <link rel="stylesheet" href="css/owl.carousel.css">
     <link rel="stylesheet" href="css/nice-select.css">
     <link rel="stylesheet" href="css/nouislider.min.css">
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="./css/main.css">
     
 <style>
     body {
@@ -99,7 +100,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
     /* Tombol booking ramping dan responsif */
     .primary-btn {
-    background: linear-gradient(45deg, #fbb034, #ffdd00);
+    background: linear-gradient(45deg, #fbb034,#fab700(255, 221, 0, 0.68));
     border: none;
     color: #fff !important;
     padding: 6px 16px;          /* lebih ramping */
@@ -367,7 +368,7 @@ if (session_status() === PHP_SESSION_NONE) {
     ?>
 
     <?php include("../layout/footer.php"); ?>
-
+   
   <script src="js/vendor/jquery-2.2.4.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
   <script src="js/vendor/bootstrap.min.js"></script>

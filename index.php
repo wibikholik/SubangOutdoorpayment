@@ -289,7 +289,8 @@ if (!$result_barang) {
     <div class="row">
       <?php if (mysqli_num_rows($result_barang) > 0): ?>
         <?php while ($row = mysqli_fetch_assoc($result_barang)): ?>
-          <div class="col-lg-3 col-md-6 mb-4">
+         <div class="col-lg-3 col-sm-6 col-6 mb-4 d-flex">
+
             <div class="product-card">
              
                 <img src="barang/barang/gambar/<?= htmlspecialchars($row['gambar']); ?>" class="card-img-top" alt="<?= htmlspecialchars($row['nama_barang']); ?>" />
@@ -300,7 +301,7 @@ if (!$result_barang) {
               </div>
               <div class="card-footer">
                 <button type="button" class="primary-btn" data-bs-toggle="modal" data-bs-target="#keranjangModal<?= $row['id_barang']; ?>">
-                  <i class="fas fa-cart-plus me-2"></i>Booking Sekarang
+                Booking Sekarang
                 </button>
               </div>
             </div>
