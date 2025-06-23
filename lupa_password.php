@@ -11,8 +11,8 @@ $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'];
 
-    // Cek email di semua tabel
-    $tables = ['admin' => 'email', 'owner' => 'email', 'penyewa' => 'email'];
+    // Cek email hanya di tabel penyewa
+    $tables = ['penyewa' => 'email'];
     $found = false;
 
     foreach ($tables as $table => $field) {
@@ -26,29 +26,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Kirim email OTP
             $mail = new PHPMailer(true);
             try {
-            $mail = new PHPMailer(true);
-            // Konfigurasi SMTP
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = 'subangoutdoortes@gmail.com';  // Ganti dengan email pengirim Anda
-            $mail->Password   = 'sbsn ajtg fgox otra';          // Ganti dengan App Password email
-            $mail->SMTPSecure = 'tls';
-            $mail->Port       = 587;
+                $mail->isSMTP();
+                $mail->Host       = 'smtp.gmail.com';
+                $mail->SMTPAuth   = true;
+                $mail->Username   = 'subangoutdoortes@gmail.com';  // Ganti dengan email pengirim Anda
+                $mail->Password   = 'sbsn ajtg fgox otra';          // Ganti dengan App Password email
+                $mail->SMTPSecure = 'tls';
+                $mail->Port       = 587;
 
-            $mail->setFrom('subangoutdoortes@gmail.com', 'Subang Outdoor');
+                $mail->setFrom('subangoutdoortes@gmail.com', 'Subang Outdoor');
                 $mail->addAddress($email);
                 $mail->Subject = 'Kode OTP Reset Password';
                 $mail->Body = "
-                    <p>Halo,</p>
-                    <p>Kami menerima permintaan untuk mereset password akun Anda di <strong>Subang Outdoor</strong>.</p>
-                    <p>Berikut adalah kode OTP Anda:</p>
-                    <h2 style='color:#2c3e50;'>$otp</h2>
-                    <p>Jangan bagikan kode ini kepada siapa pun. Kode ini hanya berlaku selama <strong>5 menit</strong>.</p>
-                    <br>
-                    <p>Jika Anda tidak merasa melakukan permintaan ini, silakan abaikan email ini.</p>
-                    <p>Terima kasih,<br>Subang Outdoor Team</p>
-                ";
+                   Yth. Pengguna Subang Outdoor,
+
+Kami menerima permintaan reset password untuk akun Anda.
+
+Berikut adalah kode OTP Anda:
+$otp
+
+Kode ini hanya berlaku selama 5 menit dan mohon untuk tidak dibagikan kepada siapa pun demi alasan keamanan.
+
+Jika Anda tidak merasa melakukan permintaan ini, harap abaikan email ini.
+
+Hormat kami,
+Tim Subang Outdoor";
+
                 $mail->send();
                 header("Location: verifikasi_otp.php");
                 exit;
@@ -66,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="id">

@@ -107,6 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_pengembalian']
         }
     }
 
+    // Tentukan status transaksi & status pengembalian
+    $status_transaksi_baru = ($status_denda === 'sudah') ? 'Selesai Dikembalikan' : 'Menunggu Konfirmasi Pengembalian';
+
     $koneksi->begin_transaction();
     try {
         // Update checklist kondisi akhir
@@ -120,21 +123,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_pengembalian']
             $stmt_upd->close();
         }
 
-        // Insert data pengembalian
+        // Insert ke tabel pengembalian (status_pengembalian diganti)
         $stmt = $koneksi->prepare("INSERT INTO pengembalian (id_transaksi, tanggal_pengembalian, bukti_pengembalian, denda, catatan, status_pengembalian) VALUES (?, NOW(), ?, ?, ?, ?)");
-        $stmt->bind_param("isdss", $id_transaksi, $bukti_pengembalian, $denda, $catatan, $status_denda);
+        $stmt->bind_param("isdss", $id_transaksi, $bukti_pengembalian, $denda, $catatan, $status_transaksi_baru);
         $stmt->execute();
         $stmt->close();
 
         // Update status transaksi
-        $status_transaksi_baru = ($status_denda === 'sudah') ? 'selesai dikembalikan' : 'menunggu konfirmasi pengembalian';
         $stmt_upd_trans = $koneksi->prepare("UPDATE transaksi SET status = ? WHERE id_transaksi = ?");
         $stmt_upd_trans->bind_param("si", $status_transaksi_baru, $id_transaksi);
         $stmt_upd_trans->execute();
         $stmt_upd_trans->close();
 
-        $koneksi->commit();
+        // Jika status Selesai Dikembalikan, kembalikan stok barang
+        if ($status_transaksi_baru === 'Selesai Dikembalikan') {
+            $stmt_detail = $koneksi->prepare("SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?");
+            $stmt_detail->bind_param("i", $id_transaksi);
+            $stmt_detail->execute();
+            $result = $stmt_detail->get_result();
 
+            while ($row = $result->fetch_assoc()) {
+                $id_barang = $row['id_barang'];
+                $jumlah_dikembalikan = $row['jumlah_barang'];
+
+                $stmt_update_stok = $koneksi->prepare("UPDATE barang SET stok = stok + ? WHERE id_barang = ?");
+                $stmt_update_stok->bind_param("ii", $jumlah_dikembalikan, $id_barang);
+                $stmt_update_stok->execute();
+                $stmt_update_stok->close();
+            }
+
+            $stmt_detail->close();
+        }
+
+        $koneksi->commit();
         echo "<script>alert('Pengembalian berhasil disimpan.'); window.location.href='transaksi.php';</script>";
         exit;
     } catch (Exception $e) {
@@ -142,6 +163,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_pengembalian']
         die("Gagal menyimpan pengembalian: " . $e->getMessage());
     }
 }
+
+    
 ?>
 
 <!DOCTYPE html>

@@ -68,6 +68,12 @@ if ($bulan && $tahun) {
     $whereFilter = " AND MONTH(t.tanggal_kembali) = '$bulan' AND YEAR(t.tanggal_kembali) = '$tahun' ";
 }
 
+// Filter tambahan untuk pengembalian
+$whereFilterPengembalian = "";
+if ($bulan && $tahun) {
+    $whereFilterPengembalian = " AND MONTH(p.tanggal_pengembalian) = '$bulan' AND YEAR(p.tanggal_pengembalian) = '$tahun' ";
+}
+
 // Query transaksi selesai dengan filter, join ke penyewa untuk nama
 $queryTransaksi = "
     SELECT t.*, m.nama_metode, p.nama_penyewa 
@@ -101,7 +107,7 @@ while ($row = mysqli_fetch_assoc($chart)) {
     $chart_data[] = (float)$row['total'];
 }
 
-// Query laporan pengembalian dengan join ke penyewa
+// Query laporan pengembalian dengan join ke penyewa dan filter bulan/tahun
 $pengembalian = mysqli_query($koneksi, "
     SELECT p.*, t.tanggal_sewa, t.tanggal_kembali, t.id_penyewa, py.nama_penyewa,
            k.nama_kelengkapan,
@@ -114,7 +120,7 @@ $pengembalian = mysqli_query($koneksi, "
     JOIN penyewa py ON t.id_penyewa = py.id_penyewa
     LEFT JOIN checklist c ON p.id_transaksi = c.id_transaksi
     LEFT JOIN kelengkapan_barang k ON c.id_kelengkapan = k.id_kelengkapan
-    WHERE p.status_pengembalian = 'Selesai Dikembalikan'
+    WHERE p.status_pengembalian = 'Selesai Dikembalikan' $whereFilterPengembalian
     ORDER BY p.tanggal_pengembalian DESC
 ");
 
@@ -166,9 +172,9 @@ while ($row = mysqli_fetch_assoc($pengembalian)) {
             <div class="container-fluid">
 
                 <h1 class="h3 mb-4 text-gray-800">Laporan Transaksi & Pengembalian</h1>
-<a href="laporan_keseluruhan_pdf.php?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>" target="_blank" class="btn btn-success mb-3">
-    <i class="fas fa-file-pdf"></i> Unduh Laporan excel Keseluruhan
-</a>
+                <a href="laporan_keseluruhan_pdf.php?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>" target="_blank" class="btn btn-success mb-3">
+                    <i class="fas fa-file-pdf"></i> Unduh Laporan Excel Keseluruhan
+                </a>
 
                 <!-- Filter -->
                 <form method="get" class="mb-4">

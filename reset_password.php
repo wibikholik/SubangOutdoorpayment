@@ -5,14 +5,20 @@ include 'route/koneksi.php';
 $message = '';
 $message_type = '';
 
+// Pastikan user sudah verifikasi OTP
 if (!isset($_SESSION['otp_verified']) || !$_SESSION['otp_verified']) {
     header("Location: verifikasi_otp.php");
     exit;
 }
 
+// Pastikan koneksi berhasil
+if ($koneksi->connect_error) {
+    die("Koneksi gagal: " . $koneksi->connect_error);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $password = $_POST['password'];
-    $confirm = $_POST['confirm_password'];
+    $password = $_POST['password'] ?? '';
+    $confirm = $_POST['confirm_password'] ?? '';
 
     if ($password !== $confirm) {
         $message = "Konfirmasi password tidak cocok. Silakan coba lagi.";
@@ -21,49 +27,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = "Password baru harus terdiri dari minimal 8 karakter.";
         $message_type = 'error';
     } else {
-        $email = $_SESSION['reset_email'];
+        $email = $_SESSION['reset_email'] ?? '';
 
-        $plainPassword = $password;
-
-        $user_data = null;
-        $tables = ['admin', 'owner', 'penyewa'];
-        foreach ($tables as $table) {
-            $stmt_check = $koneksi->prepare("SELECT email FROM $table WHERE email = ?");
+        if (empty($email)) {
+            $message = "Email reset password tidak ditemukan di session.";
+            $message_type = 'error';
+        } else {
+            // Cek apakah email ada di tabel penyewa
+            $stmt_check = $koneksi->prepare("SELECT email FROM penyewa WHERE email = ?");
+            if (!$stmt_check) {
+                die("Prepare gagal (check email): " . $koneksi->error);
+            }
             $stmt_check->bind_param("s", $email);
             $stmt_check->execute();
             $result = $stmt_check->get_result();
 
             if ($result->num_rows > 0) {
-                $user_data = ['table' => $table];
-                break;
-            }
-        }
+                $stmt_check->close();
 
-        if ($user_data) {
-            $target_table = $user_data['table'];
-            
-            $stmt_update = $koneksi->prepare("UPDATE $target_table SET password = ? WHERE email = ?");
-            $stmt_update->bind_param("ss", $plainPassword, $email); 
+                // Update password di tabel penyewa
+                $stmt_update = $koneksi->prepare("UPDATE penyewa SET password = ? WHERE email = ?");
+                if (!$stmt_update) {
+                    die("Prepare gagal (update password): " . $koneksi->error);
+                }
 
+                // Kalau mau hash password, ganti baris ini:
+                // $password_to_save = password_hash($password, PASSWORD_DEFAULT);
+                $password_to_save = $password; // Plain text sesuai permintaan
 
-            if ($stmt_update->execute()) {
-                session_unset();
-                session_destroy();
-                session_start();
-                $_SESSION['success_message'] = "Password berhasil direset. Silakan login dengan password baru Anda.";
-                header("Location: login.php");
-                exit;
+                $stmt_update->bind_param("ss", $password_to_save, $email);
+
+                if ($stmt_update->execute()) {
+                    $stmt_update->close();
+
+                    // Bersihkan session reset
+                    session_unset();
+                    session_destroy();
+                    session_start();
+
+                    $_SESSION['success_message'] = "Password berhasil direset. Silakan login dengan password baru Anda.";
+                    header("Location: login.php");
+                    exit;
+                } else {
+                    $message = "Gagal memperbarui password di database: " . $stmt_update->error;
+                    $message_type = 'error';
+                }
             } else {
-                $message = "Gagal memperbarui password di database.";
+                $stmt_check->close();
+                $message = "Email tidak ditemukan di sistem kami.";
                 $message_type = 'error';
             }
-        } else {
-            $message = "Email tidak ditemukan di sistem kami.";
-            $message_type = 'error';
         }
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="id">
