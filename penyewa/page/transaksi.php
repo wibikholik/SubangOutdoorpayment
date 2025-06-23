@@ -219,7 +219,7 @@ $result_transaksi = $stmt->get_result();
     <?php endwhile; ?>
   </div>
 </div>
-
+</div>
 <?php include('../layout/footer.php'); ?>
 
 <script src="js/vendor/jquery-2.2.4.min.js"></script>

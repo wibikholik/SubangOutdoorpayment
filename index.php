@@ -185,6 +185,35 @@ if (!$result_barang) {
   .user-dropdown-toggle span {
     margin-left: 3px; /* Sesuaikan jarak sesuai selera */
   }
+  .single-feature {
+  padding: 20px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+.single-feature:hover {
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  transform: translateY(-5px);
+}
+.feature-icon img {
+  max-height: 50px;
+}
+.feature-icon i {
+  font-size: 2rem !important; /* pastikan semua pakai ukuran sama */
+  width: 2.5rem;              /* seragam lebarnya */
+  height: 2.5rem;
+  line-height: 2.5rem;
+  display: inline-block;
+  color: #fab700;
+  text-align: center;
+}
+
+.single-feature:hover .feature-icon i {
+  transform: scale(1.1);
+}
+
+
     </style>
 </head>
 <body>
@@ -306,7 +335,8 @@ if (!$result_barang) {
               </div>
             </div>
           </div>
-
+<!-- tentang kami -->
+ 
           <!-- Modal -->
           <div
             class="modal fade"
@@ -354,6 +384,90 @@ if (!$result_barang) {
     </div>
   </div>
 </section>
+<!-- Fitur -->
+<!-- ======= Features Section ======= -->
+<section class="feature-area section_gap">
+  <div class="container">
+    <div class="row justify-content-center mb-4">
+      <div class="col-lg-12 text-center">
+        <div class="section-title">
+          <h2>Kenapa Memilih Kami?</h2>
+          <p>Keunggulan layanan Subang Outdoor untuk pengalaman camping terbaik</p>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <!-- Peralatan Lengkap -->
+      <div class="col-lg-3 col-md-6 mb-4 text-center">
+        <div class="single-feature shadow-sm p-4 rounded bg-white h-100">
+          <div class="feature-icon mb-3 text-warning">
+            <i class="fas fa-campground fa-3x"></i>
+          </div>
+          <h6 class="font-weight-bold">Peralatan Lengkap</h6>
+          <p>Berbagai pilihan tenda, matras, kompor, dan perlengkapan lainnya.</p>
+        </div>
+      </div>
+      <!-- Pengembalian Mudah -->
+      <div class="col-lg-3 col-md-6 mb-4 text-center">
+        <div class="single-feature shadow-sm p-4 rounded bg-white h-100">
+          <div class="feature-icon mb-3 text-warning">
+            <i class="fas fa-undo-alt fa-3x"></i>
+          </div>
+          <h6 class="font-weight-bold">Pengembalian Mudah</h6>
+          <p>Proses pengembalian fleksibel dan tanpa ribet.</p>
+        </div>
+      </div>
+      <!-- 24/7 Support -->
+      <div class="col-lg-3 col-md-6 mb-4 text-center">
+        <div class="single-feature shadow-sm p-4 rounded bg-white h-100">
+          <div class="feature-icon mb-3 text-warning">
+            <i class="fas fa-headset fa-3x"></i>
+          </div>
+          <h6 class="font-weight-bold">24/7 Support</h6>
+          <p>Layanan pelanggan yang siap membantu kapan saja.</p>
+        </div>
+      </div>
+      <!-- Pembayaran Simpel -->
+      <div class="col-lg-3 col-md-6 mb-4 text-center">
+        <div class="single-feature shadow-sm p-4 rounded bg-white h-100">
+          <div class="feature-icon mb-3 text-warning">
+            <i class="fas fa-credit-card fa-3x"></i>
+          </div>
+          <h6 class="font-weight-bold">Pembayaran Simpel</h6>
+          <p>Bisa melalui transfer bank atau bayar langsung saat ambil.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= About Section ======= -->
+<section class="about-area section_gap" id="about">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6 mb-4 mb-lg-0 d-none d-lg-flex justify-content-center">
+        <!-- Ikon besar sebagai pengganti gambar -->
+        <i class="fas fa-info-circle fa-8x text-warning"></i>
+      </div>
+      <div class="col-lg-6">
+        <div class="section-title">
+          <h2 class="mb-4">Tentang Kami</h2>
+          <p class="text-muted">
+            Subang Outdoor adalah penyedia layanan penyewaan perlengkapan camping terpercaya di Subang. Kami menghadirkan berbagai alat camping berkualitas, mulai dari tenda, matras, kompor, hingga perlengkapan pendukung lainnya, dengan harga yang kompetitif serta kemudahan proses pemesanan.
+          </p>
+        </div>
+        <ul class="list-unstyled mt-4" style="font-size: 1.1rem; line-height: 1.75; color: #444;">
+          <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Proses pemesanan yang cepat dan mudah</li>
+          <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Lokasi strategis dengan akses mudah dijangkau</li>
+          <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Perlengkapan selalu dalam kondisi bersih dan siap pakai</li>
+          <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Sistem pembayaran yang simpel dan fleksibel</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 
 <?php include('penyewa/layout/footer.php') ?>
 
