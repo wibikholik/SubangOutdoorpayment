@@ -48,12 +48,12 @@ if (!isset($_FILES['bukti_pembayaran']) || $_FILES['bukti_pembayaran']['error'] 
 }
 
 $file = $_FILES['bukti_pembayaran'];
-$allowed_ext = ['jpg', 'jpeg', 'png', 'pdf'];
+$allowed_ext = ['jpg', 'jpeg', 'png', ];
 $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 $max_size = 5 * 1024 * 1024;
 
 if (!in_array($ext, $allowed_ext)) {
-    echo "<script>alert('Format file tidak diizinkan. Hanya JPG, PNG, PDF.'); window.history.back();</script>";
+    echo "<script>alert('Format file tidak diizinkan. Hanya JPG,'); window.history.back();</script>";
     exit;
 }
 if ($file['size'] > $max_size) {

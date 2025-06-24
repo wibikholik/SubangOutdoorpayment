@@ -64,30 +64,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_checklist']) &
     }
 }
 
-// Ambil kategori barang dari transaksi
+// Ambil semua kategori dari barang di transaksi ini
+$id_kategoris = [];
 $stmt_kategori = $koneksi->prepare("
-    SELECT b.id_kategori 
+    SELECT DISTINCT b.id_kategori 
     FROM detail_transaksi dt
     JOIN barang b ON dt.id_barang = b.id_barang
     WHERE dt.id_transaksi = ?
-    LIMIT 1
 ");
 $stmt_kategori->bind_param("i", $id_transaksi);
 $stmt_kategori->execute();
 $result_kategori = $stmt_kategori->get_result();
-
-$id_kategori = 0;
-if ($row = $result_kategori->fetch_assoc()) {
-    $id_kategori = intval($row['id_kategori']);
+while ($row = $result_kategori->fetch_assoc()) {
+    $id_kategoris[] = intval($row['id_kategori']);
 }
 $stmt_kategori->close();
 
-if (!$id_kategori) {
+if (empty($id_kategoris)) {
     die("Kategori barang tidak ditemukan.");
 }
 
-// Ambil data kelengkapan berdasarkan kategori
-$result_kelengkapan = mysqli_query($koneksi, "SELECT * FROM kelengkapan_barang WHERE id_kategori = $id_kategori");
+// Ambil semua kelengkapan berdasarkan kategori yang terlibat dalam transaksi
+$id_kategoris_string = implode(',', $id_kategoris);
+$result_kelengkapan = mysqli_query($koneksi, "SELECT * FROM kelengkapan_barang WHERE id_kategori IN ($id_kategoris_string)");
 if (!$result_kelengkapan) {
     die("Gagal mengambil data kelengkapan: " . mysqli_error($koneksi));
 }
@@ -100,7 +99,7 @@ if (!$result_kelengkapan) {
     <meta charset="UTF-8">
     <title>Checklist Pengambilan Barang</title>
 
-    <!-- Link CSS yang kamu pakai, jangan dihapus -->
+    <!-- Link CSS -->
     <link rel="stylesheet" href="css/linearicons.css" />
     <link rel="stylesheet" href="css/owl.carousel.css" />
     <link rel="stylesheet" href="css/themify-icons.css" />
@@ -109,83 +108,80 @@ if (!$result_kelengkapan) {
     <link rel="stylesheet" href="css/nouislider.min.css" />
     <link rel="stylesheet" href="css/bootstrap.css" />
     <link rel="stylesheet" href="css/main.css" />
-     <link rel="shortcut icon" href="../../assets/img/logo.jpg">
-    <!-- CSS lain kalau ada -->
+    <link rel="shortcut icon" href="../../assets/img/logo.jpg">
 </head>
 
 <body>
 
-    <?php include("../layout/navbar1.php"); ?>
+<?php include("../layout/navbar1.php"); ?>
 
-    <section class="banner-area organic-breadcrumb">
-        <div class="container">
-            <div class="breadcrumb-banner d-flex flex-wrap align-items-center justify-content-end">
-                <div class="col-first">
-                    <h1>Subang Outdoor</h1>
-                    <nav class="d-flex align-items-center">
-                        <a href="#">Form Kondisi Awal Barang</a>
-                    </nav>
-                </div>
+<section class="banner-area organic-breadcrumb">
+    <div class="container">
+        <div class="breadcrumb-banner d-flex flex-wrap align-items-center justify-content-end">
+            <div class="col-first">
+                <h1>Subang Outdoor</h1>
+                <nav class="d-flex align-items-center">
+                    <a href="#">Form Kondisi Awal Barang</a>
+                </nav>
             </div>
         </div>
-    </section>
-
-    <div class="container mt-5">
-        <h3>Checklist Pengambilan - Transaksi #<?= htmlspecialchars($id_transaksi) ?></h3>
-
-        <?php if ($checklist_exists): ?>
-            <div class="alert alert-success">Checklist sudah diisi. Terima kasih!</div>
-        <?php else: ?>
-            <form method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) . '?id_transaksi=' . $id_transaksi ?>">
-                <input type="hidden" name="id_transaksi" value="<?= $id_transaksi ?>">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Nama Kelengkapan</th>
-                            <th>Status Awal</th>
-                            <th>Keterangan (Opsional)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($row = mysqli_fetch_assoc($result_kelengkapan)): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($row['nama_kelengkapan']) ?></td>
-                                <td>
-                                    <select name="status_awal[<?= $row['id_kelengkapan'] ?>]" class="form-control" required>
-                                        <option value="">-- Pilih Status --</option>
-                                        <option value="ada">Ada</option>
-                                        <option value="tidak ada">Tidak Ada</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="keterangan[<?= $row['id_kelengkapan'] ?>]" class="form-control" placeholder="Contoh: sobek, rusak ringan...">
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
-                <button type="submit" name="submit_checklist" class="btn btn-primary">Simpan Checklist</button>
-            </form>
-        <?php endif; ?>
     </div>
+</section>
 
-    <br>
+<div class="container mt-5">
+    <h3>Checklist Pengambilan - Transaksi #<?= htmlspecialchars($id_transaksi) ?></h3>
 
-    <?php include('../layout/footer.php'); ?>
+    <?php if ($checklist_exists): ?>
+        <div class="alert alert-success">Checklist sudah diisi. Terima kasih!</div>
+    <?php else: ?>
+        <form method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) . '?id_transaksi=' . $id_transaksi ?>">
+            <input type="hidden" name="id_transaksi" value="<?= $id_transaksi ?>">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Nama Kelengkapan</th>
+                        <th>Status Awal</th>
+                        <th>Keterangan (Opsional)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($row = mysqli_fetch_assoc($result_kelengkapan)): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($row['nama_kelengkapan']) ?></td>
+                            <td>
+                                <select name="status_awal[<?= $row['id_kelengkapan'] ?>]" class="form-control" required>
+                                    <option value="">-- Pilih Status --</option>
+                                    <option value="ada">Ada</option>
+                                    <option value="tidak ada">Tidak Ada</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="keterangan[<?= $row['id_kelengkapan'] ?>]" class="form-control" placeholder="Contoh: sobek, rusak ringan...">
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+            <button type="submit" name="submit_checklist" class="btn btn-primary">Simpan Checklist</button>
+        </form>
+    <?php endif; ?>
+</div>
 
-    <!-- Script JS tetap utuh seperti biasa -->
-    <script src="js/vendor/bootstrap.min.js"></script>
-    <script src="js/jquery.ajaxchimp.min.js"></script>
-    <script src="js/jquery.nice-select.min.js"></script>
-    <script src="js/jquery.sticky.js"></script>
-    <script src="js/nouislider.min.js"></script>
-    <script src="js/jquery.magnific-popup.min.js"></script>
-    <script src="js/owl.carousel.min.js"></script>
-    <!--gmaps Js-->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjCGmQ0Uq4exrzdcL6rvxywDDOvfAu6eE"></script>
-    <script src="js/gmaps.min.js"></script>
-    <script src="js/main.js"></script>
+<br>
+
+<?php include('../layout/footer.php'); ?>
+
+<!-- JS Script -->
+<script src="js/vendor/bootstrap.min.js"></script>
+<script src="js/jquery.ajaxchimp.min.js"></script>
+<script src="js/jquery.nice-select.min.js"></script>
+<script src="js/jquery.sticky.js"></script>
+<script src="js/nouislider.min.js"></script>
+<script src="js/jquery.magnific-popup.min.js"></script>
+<script src="js/owl.carousel.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjCGmQ0Uq4exrzdcL6rvxywDDOvfAu6eE"></script>
+<script src="js/gmaps.min.js"></script>
+<script src="js/main.js"></script>
 
 </body>
-
 </html>

@@ -103,34 +103,39 @@ $result_transaksi = $stmt->get_result();
           </div>
         </div>
 
-        <div class="card-body">
+        <div class="card mb-4 shadow-sm p-3" style="min-width: 360px; max-width: 520px; flex: 1; word-wrap: break-word; overflow-wrap: break-word;">
           <div><strong>Periode Sewa:</strong> <?= $tanggal_sewa->format('d M Y'); ?> - <?= $tanggal_kembali->format('d M Y'); ?></div>
           <div><strong>Lama Sewa:</strong> <?= $lama_sewa; ?> hari</div>
 
-          <?php if ($result_detail && $result_detail->num_rows > 0): ?>
-            <table class="table mt-2">
-              <thead>
-                <tr>
-                  <th>Gambar</th>
-                  <th>Nama Barang</th>
-                  <th>Jumlah</th>
-                  <th>Harga Satuan</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php while ($row = $result_detail->fetch_assoc()) : ?>
-                  <tr>
-                    <td><img src="../../barang/barang/gambar/<?= htmlspecialchars($row['gambar']); ?>" alt="Barang" style="width: 80px;"></td>
-                    <td><?= htmlspecialchars($row['nama_barang']); ?></td>
-                    <td><?= htmlspecialchars($row['jumlah_barang']); ?></td>
-                    <td>Rp<?= number_format($row['harga_satuan'], 0, ',', '.'); ?></td>
-                  </tr>
-                <?php endwhile; ?>
-              </tbody>
-            </table>
-          <?php else: ?>
-            <div class="text-muted">Tidak ada detail barang.</div>
-          <?php endif; ?>
+         <?php if ($result_detail && $result_detail->num_rows > 0): ?>
+  <div style="overflow-x: auto;">
+    <table class="table table-bordered mt-2" style="min-width: 480px;">
+      <thead class="thead-light">
+        <tr>
+          <th>Gambar</th>
+          <th>Nama Barang</th>
+          <th>Jumlah</th>
+          <th>Harga Satuan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php while ($row = $result_detail->fetch_assoc()) : ?>
+          <tr>
+            <td>
+              <img src="../../barang/barang/gambar/<?= htmlspecialchars($row['gambar']); ?>" alt="Barang" style="width: 60px; height: auto;">
+            </td>
+            <td><?= htmlspecialchars($row['nama_barang']); ?></td>
+            <td><?= htmlspecialchars($row['jumlah_barang']); ?></td>
+            <td>Rp<?= number_format($row['harga_satuan'], 0, ',', '.'); ?></td>
+          </tr>
+        <?php endwhile; ?>
+      </tbody>
+    </table>
+  </div>
+<?php else: ?>
+  <div class="text-muted">Tidak ada detail barang.</div>
+<?php endif; ?>
+
 
           <div class="d-flex justify-content-between mt-3 align-items-center">
   <div><strong>Total:</strong> Rp<?= number_format($transaksi['total_harga_sewa'], 0, ',', '.'); ?></div>

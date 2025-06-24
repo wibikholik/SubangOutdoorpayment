@@ -13,26 +13,32 @@ if (!$id_transaksi) {
     die("ID Transaksi tidak ditemukan.");
 }
 
-// Ambil kategori barang
+$error_message = null;
+
+// Ambil semua kategori barang dalam transaksi
 $stmt_kat = $koneksi->prepare("
-    SELECT b.id_kategori 
+    SELECT DISTINCT b.id_kategori 
     FROM detail_transaksi dt
     JOIN barang b ON dt.id_barang = b.id_barang
     WHERE dt.id_transaksi = ?
-    LIMIT 1
 ");
 $stmt_kat->bind_param("i", $id_transaksi);
 $stmt_kat->execute();
 $res_kat = $stmt_kat->get_result();
-if ($res_kat->num_rows === 0) {
-    die("Kategori barang tidak ditemukan.");
+$id_kategoris = [];
+while ($row = $res_kat->fetch_assoc()) {
+    $id_kategoris[] = intval($row['id_kategori']);
 }
-$data_kat = $res_kat->fetch_assoc();
-$id_kategori = intval($data_kat['id_kategori']);
 $stmt_kat->close();
 
-// Ambil kelengkapan barang sesuai kategori
-$result_kelengkapan = mysqli_query($koneksi, "SELECT * FROM kelengkapan_barang WHERE id_kategori = $id_kategori ORDER BY nama_kelengkapan");
+if (empty($id_kategoris)) {
+    die("Kategori barang tidak ditemukan.");
+}
+
+$id_kategori_str = implode(',', $id_kategoris);
+
+// Ambil kelengkapan barang sesuai semua kategori
+$result_kelengkapan = mysqli_query($koneksi, "SELECT * FROM kelengkapan_barang WHERE id_kategori IN ($id_kategori_str) ORDER BY nama_kelengkapan");
 if (!$result_kelengkapan) {
     die("Gagal mengambil data kelengkapan: " . mysqli_error($koneksi));
 }
@@ -51,7 +57,7 @@ while ($row = $res_check_awal->fetch_assoc()) {
 }
 $q_check_awal->close();
 
-// Cek apakah checklist kondisi akhir sudah diisi, supaya gak dobel input
+// Cek apakah checklist kondisi akhir sudah diisi
 $stmt_check = $koneksi->prepare("SELECT COUNT(*) AS jumlah_akhir FROM checklist WHERE id_transaksi = ? AND status_akhir IS NOT NULL");
 $stmt_check->bind_param("i", $id_transaksi);
 $stmt_check->execute();
@@ -68,34 +74,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_pengembalian']
     $status_denda = $_POST['status_denda'] ?? '';
 
     if (!in_array($status_denda, ['belum', 'sudah'])) {
-        die("Status pembayaran denda tidak valid.");
+        $error_message = "Status pembayaran denda tidak valid.";
     }
 
-    // Upload bukti pengembalian wajib
     $bukti_pengembalian = null;
-    if (isset($_FILES['bukti_pengembalian']) && $_FILES['bukti_pengembalian']['error'] === UPLOAD_ERR_OK) {
+    if (!$error_message && isset($_FILES['bukti_pengembalian']) && $_FILES['bukti_pengembalian']['error'] === UPLOAD_ERR_OK) {
         $tmp_name = $_FILES['bukti_pengembalian']['tmp_name'];
         $name = basename($_FILES['bukti_pengembalian']['name']);
         $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        $allowed_ext = ['jpg', 'jpeg', 'png', 'pdf'];
+        $allowed_ext = ['jpg', 'jpeg', 'png'];
 
         if (!in_array($ext, $allowed_ext)) {
-            die("Format file bukti pengembalian tidak diperbolehkan. Hanya jpg, jpeg, png, pdf.");
+            $error_message = "Format file bukti pengembalian tidak diperbolehkan. Hanya jpg, jpeg, png.";
+        } else {
+            $new_name = 'bukti_pengembalian_' . $id_transaksi . '_' . time() . '.' . $ext;
+            $upload_dir = __DIR__ . '/../uploads/bukti_pengembalian/';
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+            $upload_path = $upload_dir . $new_name;
+
+            if (!move_uploaded_file($tmp_name, $upload_path)) {
+                $error_message = "Gagal mengunggah file bukti pengembalian.";
+            } else {
+                $bukti_pengembalian = $new_name;
+            }
         }
-
-        $new_name = 'bukti_pengembalian_' . $id_transaksi . '_' . time() . '.' . $ext;
-        $upload_dir = __DIR__ . '/../uploads/bukti_pengembalian/';
-
-        if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
-
-        $upload_path = $upload_dir . $new_name;
-
-        if (!move_uploaded_file($tmp_name, $upload_path)) {
-            die("Gagal mengunggah file bukti pengembalian.");
-        }
-        $bukti_pengembalian = $new_name;
-    } else {
-        die("Bukti pengembalian wajib diunggah.");
+    } else if (!$error_message) {
+        $error_message = "Bukti pengembalian wajib diunggah.";
     }
 
     $status_akhir_arr = $_POST['status_akhir'] ?? [];
@@ -103,68 +107,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_pengembalian']
 
     foreach ($status_akhir_arr as $id_kelengkapan_post => $status_akhir_val) {
         if (!in_array($status_akhir_val, ['ada', 'tidak ada'])) {
-            die("Status akhir untuk kelengkapan tidak valid.");
+            $error_message = "Status akhir untuk kelengkapan tidak valid.";
+            break;
         }
     }
 
-    // Tentukan status transaksi & status pengembalian
-    $status_transaksi_baru = ($status_denda === 'sudah') ? 'Selesai Dikembalikan' : 'Menunggu Konfirmasi Pengembalian';
+    if (!$error_message) {
+        $status_transaksi_baru = ($status_denda === 'sudah') ? 'Selesai Dikembalikan' : 'Menunggu Konfirmasi Pengembalian';
 
-    $koneksi->begin_transaction();
-    try {
-        // Update checklist kondisi akhir
-        foreach ($status_akhir_arr as $id_kelengkapan_post => $status_akhir_val) {
-            $id_kelengkapan_post = intval($id_kelengkapan_post);
-            $keterangan_akhir_val = trim($keterangan_akhir_arr[$id_kelengkapan_post] ?? '');
+        $koneksi->begin_transaction();
+        try {
+            foreach ($status_akhir_arr as $id_kelengkapan_post => $status_akhir_val) {
+                $id_kelengkapan_post = intval($id_kelengkapan_post);
+                $keterangan_akhir_val = trim($keterangan_akhir_arr[$id_kelengkapan_post] ?? '');
 
-            $stmt_upd = $koneksi->prepare("UPDATE checklist SET status_akhir = ?, keterangan_akhir = ?, updated_at = NOW() WHERE id_transaksi = ? AND id_kelengkapan = ?");
-            $stmt_upd->bind_param("ssii", $status_akhir_val, $keterangan_akhir_val, $id_transaksi, $id_kelengkapan_post);
-            $stmt_upd->execute();
-            $stmt_upd->close();
-        }
-
-        // Insert ke tabel pengembalian (status_pengembalian diganti)
-        $stmt = $koneksi->prepare("INSERT INTO pengembalian (id_transaksi, tanggal_pengembalian, bukti_pengembalian, denda, catatan, status_pengembalian) VALUES (?, NOW(), ?, ?, ?, ?)");
-        $stmt->bind_param("isdss", $id_transaksi, $bukti_pengembalian, $denda, $catatan, $status_transaksi_baru);
-        $stmt->execute();
-        $stmt->close();
-
-        // Update status transaksi
-        $stmt_upd_trans = $koneksi->prepare("UPDATE transaksi SET status = ? WHERE id_transaksi = ?");
-        $stmt_upd_trans->bind_param("si", $status_transaksi_baru, $id_transaksi);
-        $stmt_upd_trans->execute();
-        $stmt_upd_trans->close();
-
-        // Jika status Selesai Dikembalikan, kembalikan stok barang
-        if ($status_transaksi_baru === 'Selesai Dikembalikan') {
-            $stmt_detail = $koneksi->prepare("SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?");
-            $stmt_detail->bind_param("i", $id_transaksi);
-            $stmt_detail->execute();
-            $result = $stmt_detail->get_result();
-
-            while ($row = $result->fetch_assoc()) {
-                $id_barang = $row['id_barang'];
-                $jumlah_dikembalikan = $row['jumlah_barang'];
-
-                $stmt_update_stok = $koneksi->prepare("UPDATE barang SET stok = stok + ? WHERE id_barang = ?");
-                $stmt_update_stok->bind_param("ii", $jumlah_dikembalikan, $id_barang);
-                $stmt_update_stok->execute();
-                $stmt_update_stok->close();
+                $stmt_upd = $koneksi->prepare("UPDATE checklist SET status_akhir = ?, keterangan_akhir = ?, updated_at = NOW() WHERE id_transaksi = ? AND id_kelengkapan = ?");
+                $stmt_upd->bind_param("ssii", $status_akhir_val, $keterangan_akhir_val, $id_transaksi, $id_kelengkapan_post);
+                $stmt_upd->execute();
+                $stmt_upd->close();
             }
 
-            $stmt_detail->close();
-        }
+            $stmt = $koneksi->prepare("INSERT INTO pengembalian (id_transaksi, tanggal_pengembalian, bukti_pengembalian, denda, catatan, status_pengembalian) VALUES (?, NOW(), ?, ?, ?, ?)");
+            $stmt->bind_param("isdss", $id_transaksi, $bukti_pengembalian, $denda, $catatan, $status_transaksi_baru);
+            $stmt->execute();
+            $stmt->close();
 
-        $koneksi->commit();
-        echo "<script>alert('Pengembalian berhasil disimpan.'); window.location.href='transaksi.php';</script>";
-        exit;
-    } catch (Exception $e) {
-        $koneksi->rollback();
-        die("Gagal menyimpan pengembalian: " . $e->getMessage());
+            $stmt_upd_trans = $koneksi->prepare("UPDATE transaksi SET status = ? WHERE id_transaksi = ?");
+            $stmt_upd_trans->bind_param("si", $status_transaksi_baru, $id_transaksi);
+            $stmt_upd_trans->execute();
+            $stmt_upd_trans->close();
+
+            if ($status_transaksi_baru === 'Selesai Dikembalikan') {
+                $stmt_detail = $koneksi->prepare("SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?");
+                $stmt_detail->bind_param("i", $id_transaksi);
+                $stmt_detail->execute();
+                $result = $stmt_detail->get_result();
+
+                while ($row = $result->fetch_assoc()) {
+                    $id_barang = $row['id_barang'];
+                    $jumlah_dikembalikan = $row['jumlah_barang'];
+
+                    $stmt_update_stok = $koneksi->prepare("UPDATE barang SET stok = stok + ? WHERE id_barang = ?");
+                    $stmt_update_stok->bind_param("ii", $jumlah_dikembalikan, $id_barang);
+                    $stmt_update_stok->execute();
+                    $stmt_update_stok->close();
+                }
+
+                $stmt_detail->close();
+            }
+
+            $koneksi->commit();
+            echo "<script>alert('Pengembalian berhasil disimpan.'); window.location.href='transaksi.php';</script>";
+            exit;
+        } catch (Exception $e) {
+            $koneksi->rollback();
+            $error_message = "Gagal menyimpan pengembalian: " . $e->getMessage();
+        }
     }
 }
-
-    
 ?>
 
 <!DOCTYPE html>
@@ -184,17 +184,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_pengembalian']
 <body id="page-top">
 
 <div id="wrapper">
-
     <?php include '../layout/sidebar.php'; ?>
 
     <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">
-
             <?php include '../layout/navbar.php'; ?>
 
             <div class="container-fluid">
-
                 <h1 class="h3 mb-4 text-gray-800">Form Pengembalian Barang - Transaksi #<?= htmlspecialchars($id_transaksi) ?></h1>
+
+                <?php if (!empty($error_message)): ?>
+                    <div class="alert alert-danger"><?= htmlspecialchars($error_message) ?></div>
+                <?php endif; ?>
 
                 <?php if ($checklist_akhir_exists): ?>
                     <div class="alert alert-success">Checklist kondisi akhir sudah diisi.</div>
@@ -202,7 +203,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_pengembalian']
                     <div class="card shadow mb-4">
                         <div class="card-body">
                             <form method="POST" action="" enctype="multipart/form-data">
-
                                 <table class="table table-bordered table-perbandingan">
                                     <thead>
                                         <tr>
@@ -254,8 +254,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_pengembalian']
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="bukti_pengembalian">Upload Bukti Pengembalian (jpg, png, pdf):</label>
-                                    <input type="file" name="bukti_pengembalian" id="bukti_pengembalian" class="form-control-file" accept=".jpg,.jpeg,.png,.pdf" required />
+                                    <label for="bukti_pengembalian">Upload Bukti Pengembalian (jpg, jpeg, png):</label>
+                                    <input type="file" name="bukti_pengembalian" id="bukti_pengembalian" class="form-control-file" accept=".jpg,.jpeg,.png" required />
+                                    <small class="form-text text-muted">Hanya file jpg, jpeg, atau png yang diizinkan.</small>
                                 </div>
 
                                 <div class="form-group">
@@ -265,20 +266,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_pengembalian']
 
                                 <button type="submit" name="submit_pengembalian" class="btn btn-primary">Simpan Pengembalian</button>
                                 <a href="transaksi.php" class="btn btn-secondary">Batal</a>
-
                             </form>
                         </div>
                     </div>
                 <?php endif; ?>
-
             </div>
-
         </div>
     </div>
-
 </div>
 
-<!-- Scroll to Top Button-->
 <a class="scroll-to-top rounded" href="#page-top"><i class="fas fa-angle-up"></i></a>
 
 <script src="../assets/vendor/jquery/jquery.min.js"></script>
@@ -287,3 +283,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_pengembalian']
 
 </body>
 </html>
+                                            

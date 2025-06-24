@@ -39,26 +39,33 @@ if ($row_check = $res_check->fetch_assoc()) {
 }
 $stmt_check->close();
 
-// Ambil kategori barang dari transaksi (ambil 1 kategori barang dari detail transaksi)
+// Ambil semua kategori barang dari transaksi
+$id_kategoris = [];
 $stmt_kat = $koneksi->prepare("
-    SELECT b.id_kategori 
+    SELECT DISTINCT b.id_kategori 
     FROM detail_transaksi dt
     JOIN barang b ON dt.id_barang = b.id_barang
     WHERE dt.id_transaksi = ?
-    LIMIT 1
 ");
 $stmt_kat->bind_param("i", $id_transaksi);
 $stmt_kat->execute();
 $res_kat = $stmt_kat->get_result();
-if ($res_kat->num_rows === 0) {
-    die("Kategori barang tidak ditemukan.");
+while ($row_kat = $res_kat->fetch_assoc()) {
+    $id_kategoris[] = intval($row_kat['id_kategori']);
 }
-$data_kat = $res_kat->fetch_assoc();
-$id_kategori = intval($data_kat['id_kategori']);
 $stmt_kat->close();
 
-// Ambil kelengkapan barang sesuai kategori
-$result_kelengkapan = mysqli_query($koneksi, "SELECT * FROM kelengkapan_barang WHERE id_kategori = $id_kategori ORDER BY nama_kelengkapan");
+if (empty($id_kategoris)) {
+    die("Kategori barang tidak ditemukan.");
+}
+
+// Ambil kelengkapan berdasarkan semua kategori
+$id_kategoris_str = implode(",", $id_kategoris);
+$result_kelengkapan = mysqli_query($koneksi, "
+    SELECT * FROM kelengkapan_barang 
+    WHERE id_kategori IN ($id_kategoris_str)
+    ORDER BY nama_kelengkapan
+");
 if (!$result_kelengkapan) {
     die("Gagal mengambil data kelengkapan: " . mysqli_error($koneksi));
 }
@@ -95,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_checklist']) &
             $stmt_ins->close();
         }
 
-        // Update status checklist pada transaksi (opsional, jika ada kolomnya)
+        // Update status checklist pada transaksi
         $stmt_upd = $koneksi->prepare("UPDATE transaksi SET status_checklist = 1 WHERE id_transaksi = ?");
         $stmt_upd->bind_param("i", $id_transaksi);
         $stmt_upd->execute();

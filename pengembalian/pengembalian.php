@@ -95,6 +95,7 @@ function getBadgeClass($status) {
                                         <th>Status</th>
                                         <th>Denda</th>
                                         <th>Bukti Pembayaran</th>
+                                        <th>Bukti Pengembalian</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
@@ -114,10 +115,22 @@ function getBadgeClass($status) {
                                             <td>Rp<?= number_format($row['denda'] ?? 0, 0, ',', '.') ?></td>
                                             <td>
                                                 <?php if (!empty($row['bukti_pembayaran'])): ?>
-                                                    <button class="btn btn-sm btn-primary btn-bukti" 
+                                                    <button class="btn btn-sm btn-primary btn-bukti-pembayaran" 
                                                         data-toggle="modal" 
-                                                        data-target="#modalBukti" 
+                                                        data-target="#modalBuktiPembayaran" 
                                                         data-bukti="<?= htmlspecialchars($row['bukti_pembayaran']) ?>">
+                                                        <i class="fas fa-file-image"></i> Lihat Bukti
+                                                    </button>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if (!empty($row['bukti_pengembalian'])): ?>
+                                                    <button class="btn btn-sm btn-primary btn-bukti-pengembalian" 
+                                                        data-toggle="modal" 
+                                                        data-target="#modalBuktiPengembalian" 
+                                                        data-bukti="<?= htmlspecialchars($row['bukti_pengembalian']) ?>">
                                                         <i class="fas fa-file-image"></i> Lihat Bukti
                                                     </button>
                                                 <?php else: ?>
@@ -146,17 +159,34 @@ function getBadgeClass($status) {
 </div>
 
 <!-- Modal Bukti Pembayaran -->
-<div class="modal fade" id="modalBukti" tabindex="-1" role="dialog" aria-labelledby="modalBuktiLabel" aria-hidden="true">
+<div class="modal fade" id="modalBuktiPembayaran" tabindex="-1" role="dialog" aria-labelledby="modalBuktiPembayaranLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:600px;">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="modalBuktiLabel">Bukti Pembayaran</h5>
+        <h5 class="modal-title" id="modalBuktiPembayaranLabel">Bukti Pembayaran</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <div class="modal-body text-center" id="modalBuktiBody" style="min-height:200px;">
-        <!-- Gambar bukti akan dimasukkan di sini -->
+      <div class="modal-body text-center" id="modalBuktiPembayaranBody" style="min-height:200px;">
+        <!-- Gambar bukti pembayaran akan dimasukkan di sini -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Bukti Pengembalian -->
+<div class="modal fade" id="modalBuktiPengembalian" tabindex="-1" role="dialog" aria-labelledby="modalBuktiPengembalianLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:600px;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalBuktiPengembalianLabel">Bukti Pengembalian</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-center" id="modalBuktiPengembalianBody" style="min-height:200px;">
+        <!-- Gambar bukti pengembalian akan dimasukkan di sini -->
       </div>
     </div>
   </div>
@@ -174,21 +204,33 @@ function getBadgeClass($status) {
             "order": [[0, "desc"]]
         });
 
-        // Event klik tombol lihat bukti
-        $('.btn-bukti').on('click', function() {
+        // Modal Bukti Pembayaran
+        $('.btn-bukti-pembayaran').on('click', function() {
             const bukti = $(this).data('bukti');
-            const modalBody = $('#modalBuktiBody');
-
-            // Cek ekstensi file
+            const modalBody = $('#modalBuktiPembayaranBody');
             const ext = bukti.split('.').pop().toLowerCase();
 
-            // Reset modal body
             modalBody.html('');
-
             if (['jpg','jpeg','png','gif'].includes(ext)) {
                 modalBody.html(`<img src='../uploads/bukti_pembayaran/${bukti}' alt='Bukti Pembayaran' style='max-width:100%; height:auto; border:1px solid #ddd; padding:5px;'>`);
             } else if (ext === 'pdf') {
                 modalBody.html(`<embed src='../uploads/bukti_pembayaran/${bukti}' type='application/pdf' width='100%' height='400px' />`);
+            } else {
+                modalBody.text('Tidak dapat menampilkan file ini.');
+            }
+        });
+
+        // Modal Bukti Pengembalian
+        $('.btn-bukti-pengembalian').on('click', function() {
+            const bukti = $(this).data('bukti');
+            const modalBody = $('#modalBuktiPengembalianBody');
+            const ext = bukti.split('.').pop().toLowerCase();
+
+            modalBody.html('');
+            if (['jpg','jpeg','png','gif'].includes(ext)) {
+                modalBody.html(`<img src='../uploads/bukti_pengembalian/${bukti}' alt='Bukti Pengembalian' style='max-width:100%; height:auto; border:1px solid #ddd; padding:5px;'>`);
+            } else if (ext === 'pdf') {
+                modalBody.html(`<embed src='../uploads/bukti_pengembalian/${bukti}' type='application/pdf' width='100%' height='400px' />`);
             } else {
                 modalBody.text('Tidak dapat menampilkan file ini.');
             }
