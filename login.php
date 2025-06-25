@@ -167,7 +167,7 @@ if (isset($_GET['message'])) {
             <button type="submit" name="login">Login</button>
         </form>
         <div class="register-link">
-            Belum punya akun? <a href="register.php">Daftar di sini</a>
+            Belum punya akun? <a href="register.php">Registrasi di sini</a>
         </div>
     </div>
 

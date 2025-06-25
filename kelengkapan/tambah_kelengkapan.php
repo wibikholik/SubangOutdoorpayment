@@ -21,17 +21,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($id_kategori) || empty($nama_kelengkapan)) {
         $error = "Semua field wajib diisi.";
     } else {
-        // Insert ke database
-        $stmt = $koneksi->prepare("INSERT INTO kelengkapan_barang (id_kategori, nama_kelengkapan) VALUES (?, ?)");
-        $stmt->bind_param("is", $id_kategori, $nama_kelengkapan);
+        // Cek apakah kelengkapan dengan nama tersebut sudah ada di kategori yang sama
+        $cek = $koneksi->prepare("SELECT COUNT(*) FROM kelengkapan_barang WHERE id_kategori = ? AND nama_kelengkapan = ?");
+        $cek->bind_param("is", $id_kategori, $nama_kelengkapan);
+        $cek->execute();
+        $cek->bind_result($jumlah);
+        $cek->fetch();
+        $cek->close();
 
-        if ($stmt->execute()) {
-            header("Location: kelengkapan.php?pesan=input");
-            exit;
+        if ($jumlah > 0) {
+            $error = "Kelengkapan dengan nama tersebut sudah ada dalam kategori yang dipilih.";
         } else {
-            $error = "Gagal menambahkan data: " . $stmt->error;
+            // Insert ke database
+            $stmt = $koneksi->prepare("INSERT INTO kelengkapan_barang (id_kategori, nama_kelengkapan) VALUES (?, ?)");
+            $stmt->bind_param("is", $id_kategori, $nama_kelengkapan);
+
+            if ($stmt->execute()) {
+                header("Location: kelengkapan.php?pesan=input");
+                exit;
+            } else {
+                $error = "Gagal menambahkan data: " . $stmt->error;
+            }
+            $stmt->close();
         }
-        $stmt->close();
     }
 }
 ?>

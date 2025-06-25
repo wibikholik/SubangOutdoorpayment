@@ -124,7 +124,7 @@
                 <span class="show-password" onclick="togglePassword()">👁️</span>
             </div>
 
-            <button type="submit" name="register">Daftar</button>
+            <button type="submit" name="register">Registrasi</button>
         </form>
         <div class="login-link">
             Sudah punya akun? <a href="login.php">Login di sini</a>
