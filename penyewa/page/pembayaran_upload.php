@@ -1,20 +1,26 @@
 <?php
-include '../../route/koneksi.php';
-session_start();
+include '../../route/koneksi.php'; // Mengimpor koneksi ke database
+session_start(); // Memulai sesi
 
+// ===== CEK LOGIN USER =====
 if (!isset($_SESSION['user_id'])) {
+    // Jika user belum login, redirect ke halaman login
     echo "<script>alert('Silakan login terlebih dahulu.'); window.location.href='../../login.php';</script>";
     exit;
 }
-$id_penyewa = $_SESSION['user_id'];
 
+$id_penyewa = $_SESSION['user_id']; // Ambil ID penyewa dari sesi login
+
+// ===== CEK DAN VALIDASI ID TRANSAKSI =====
 $id_transaksi = isset($_GET['id_transaksi']) ? intval($_GET['id_transaksi']) : null;
 if (!$id_transaksi) {
+    // Jika tidak ada ID transaksi di URL, redirect ke halaman produk
     echo "<script>alert('ID transaksi tidak valid.'); window.location.href='../page/produk.php';</script>";
     exit;
 }
 
-// Ambil data transaksi (bisa id_metode = 0 jika user belum pilih metode)
+// ===== AMBIL DATA TRANSAKSI BERDASARKAN ID =====
+// Termasuk join ke tabel metode_pembayaran jika sudah dipilih oleh user
 $stmt = $koneksi->prepare("
     SELECT t.*, mp.nama_metode, mp.nomor_rekening, mp.gambar_metode, mp.id_metode
     FROM transaksi t
@@ -24,13 +30,17 @@ $stmt = $koneksi->prepare("
 $stmt->bind_param("ii", $id_transaksi, $id_penyewa);
 $stmt->execute();
 $result_transaksi = $stmt->get_result();
+
+// Jika tidak ditemukan atau bukan milik user
 if (!$result_transaksi || $result_transaksi->num_rows === 0) {
     echo "<script>alert('Transaksi tidak ditemukan atau bukan milik Anda.'); window.location.href='../page/produk.php';</script>";
     exit;
 }
-$transaksi = $result_transaksi->fetch_assoc();
 
-// Ambil daftar metode transfer (tipe metode 'transfer')
+$transaksi = $result_transaksi->fetch_assoc(); // Ambil data transaksi sebagai array asosiatif
+
+// ===== AMBIL DAFTAR METODE TRANSFER =====
+// Hanya mengambil metode pembayaran yang bertipe "transfer"
 $query_metode = $koneksi->query("
     SELECT mp.id_metode, mp.nama_metode, mp.nomor_rekening 
     FROM metode_pembayaran mp
@@ -39,10 +49,10 @@ $query_metode = $koneksi->query("
 ");
 $metode_transfer = [];
 while ($row = $query_metode->fetch_assoc()) {
-    $metode_transfer[$row['id_metode']] = $row;
+    $metode_transfer[$row['id_metode']] = $row; // Disimpan ke array dengan key id_metode
 }
 
-// Ambil detail transaksi
+// ===== AMBIL DETAIL TRANSAKSI (DAFTAR BARANG YANG DISEWA) =====
 $stmt_detail = $koneksi->prepare("
     SELECT dt.*, b.nama_barang, b.gambar 
     FROM detail_transaksi dt
@@ -51,16 +61,18 @@ $stmt_detail = $koneksi->prepare("
 ");
 $stmt_detail->bind_param("i", $id_transaksi);
 $stmt_detail->execute();
-$result_detail = $stmt_detail->get_result();
+$result_detail = $stmt_detail->get_result(); // Hasil: semua barang yang dipesan dalam transaksi
 
-// Ambil data penyewa
+// ===== AMBIL DATA PENYEWA =====
 $stmt_penyewa = $koneksi->prepare("SELECT nama_penyewa, no_hp, alamat FROM penyewa WHERE id_penyewa = ?");
 $stmt_penyewa->bind_param("i", $id_penyewa);
 $stmt_penyewa->execute();
 $result_penyewa = $stmt_penyewa->get_result();
-$penyewa = $result_penyewa->fetch_assoc();
-$stmt_penyewa->close();
+$penyewa = $result_penyewa->fetch_assoc(); // Ambil info penyewa (nama, no hp, alamat)
+$stmt_penyewa->close(); // Tutup statement
+
 ?>
+
 
 <!DOCTYPE html>
 <html lang="id">

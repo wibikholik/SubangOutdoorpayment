@@ -35,18 +35,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mail->addAddress($email);
             $mail->Subject = 'Kode OTP Reset Password Owner';
             $mail->Body = "
-Yth. Pengguna Subang Outdoor,
+            Yth. Pengguna Subang Outdoor,
 
-Kami menerima permintaan reset password untuk akun Owner Anda.
+            Kami menerima permintaan reset password untuk akun Owner Anda.
 
-Kode OTP Anda: $otp
+            Kode OTP Anda: $otp
 
-Kode ini berlaku 5 menit. Jangan bagikan kode ini kepada siapapun.
+            Kode ini berlaku 5 menit. Jangan bagikan kode ini kepada siapapun.
 
-Jika bukan Anda, abaikan email ini.
+            Jika bukan Anda, abaikan email ini.
 
-Hormat kami,
-Tim Subang Outdoor";
+            Hormat kami,
+            Tim Subang Outdoor";
 
             $mail->send();
             header("Location: verifikasi_otp_owner.php");

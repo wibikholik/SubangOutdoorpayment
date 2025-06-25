@@ -7,7 +7,7 @@ include 'route/koneksi.php';
 // 3. Logika untuk Navbar (mengambil data user dan keranjang)
 $username = $_SESSION['username'] ?? 'Guest';
 $id_penyewa = $_SESSION['user_id'] ?? 0;
-$currentPage = basename($_SERVER['PHP_SELF']);
+$currentPage = basename($_SERVER['PHP_SELF']);// untuk mengetahui nama file saat ini
 
 $jumlah_cart = 0;
 if ($id_penyewa) {
@@ -212,8 +212,6 @@ if (!$result_barang) {
 .single-feature:hover .feature-icon i {
   transform: scale(1.1);
 }
-
-
     </style>
 </head>
 <body>

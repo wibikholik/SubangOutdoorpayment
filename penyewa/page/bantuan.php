@@ -1,6 +1,5 @@
 <?php
-// Di sini Anda bisa menambahkan logika PHP jika diperlukan di masa depan
-session_start();
+session_start(); //untuk memanggil fungsi login
 ?>
 <!DOCTYPE html>
 <html lang="id">

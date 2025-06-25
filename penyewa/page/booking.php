@@ -267,7 +267,7 @@ while ($row = $result->fetch_assoc()) {
         <input type="date" id="tanggal_kembali" name="tanggal_kembali" class="form-control" required min="<?= date('Y-m-d') ?>" />
       </div>
 
-      <h5>Metode Pembayaran (Tipe Metode)</h5>
+      <h5>Metode Pembayaran (Tipe Metode)</h5>i
       <div class="mb-3 d-flex flex-wrap gap-3">
         <?php
         $first = true;
