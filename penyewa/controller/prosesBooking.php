@@ -24,6 +24,21 @@ if (!isset($_SESSION['user_id'])) {
 // Ambil user id penyewa dari session
 $id_penyewa = $_SESSION['user_id'];
 
+// Cek apakah penyewa diblokir
+$cekStatus = mysqli_prepare($koneksi, "SELECT status FROM penyewa WHERE id_penyewa = ?");
+mysqli_stmt_bind_param($cekStatus, "i", $id_penyewa);
+mysqli_stmt_execute($cekStatus);
+$resultStatus = mysqli_stmt_get_result($cekStatus);
+$dataStatus = mysqli_fetch_assoc($resultStatus);
+
+if ($dataStatus && $dataStatus['status'] === 'diblokir') {
+    echo "<script>
+        alert('Akun Anda telah diblokir dan tidak dapat melakukan transaksi.');
+        window.location.href='../page/produk.php';
+    </script>";
+    exit;
+}
+
 // Pastikan request method adalah POST, jika bukan maka akses tidak diizinkan
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo "<script>alert('Akses tidak diizinkan.'); window.location.href='../page/produk.php';</script>";

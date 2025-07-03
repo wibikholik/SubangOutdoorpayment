@@ -19,6 +19,14 @@ if (isset($_GET['pesan'])) {
     } elseif ($_GET['pesan'] == "update") {
         $message = "✅ Data berhasil diupdate.";
     }
+    elseif ($_GET['pesan'] == "aktifkan") {
+    $message = "✅ Penyewa berhasil diaktifkan kembali.";
+}
+
+    elseif ($_GET['pesan'] == "blokir") {
+    $message = "🚫 Penyewa berhasil diblokir.";
+}
+
 }
 
 // Ambil data penyewa dari database, diurutkan dari ID terbaru
@@ -77,7 +85,10 @@ $result = mysqli_query($koneksi, $query);
                                             <th>Alamat</th>
                                             <th>No. HP</th>
                                             <th>Email</th>
-                                            <th>Password</th> <th>Aksi</th>
+                                            <th>Password</th>
+                                            <th>Status</th> 
+                                            <th>Aksi</th>
+                                            
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -91,13 +102,31 @@ $result = mysqli_query($koneksi, $query);
                                                     <td><?= htmlspecialchars($row['email']) ?></td>
                                                     <td><?= htmlspecialchars($row['password']) ?></td>
                                                     <td>
-                                                        <a class="btn btn-warning btn-sm" href="editPenyewa.php?id_penyewa=<?= $row['id_penyewa'] ?>" data-toggle="tooltip" title="Edit">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        <a class="btn btn-danger btn-sm" href="hapus.php?id_penyewa=<?= $row['id_penyewa'] ?>" onclick="return confirm('Yakin ingin menghapus data ini?')" data-toggle="tooltip" title="Hapus">
-                                                            <i class="fas fa-trash"></i>
-                                                        </a>
+                                                        <?php if ($row['status'] == 'diblokir'): ?>
+                                                            <span class="badge badge-danger">Diblokir</span>
+                                                        <?php else: ?>
+                                                            <span class="badge badge-success">Aktif</span>
+                                                        <?php endif; ?>
                                                     </td>
+                                                   <td>
+                                                    <a class="btn btn-warning btn-sm" href="editPenyewa.php?id_penyewa=<?= $row['id_penyewa'] ?>" data-toggle="tooltip" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a class="btn btn-danger btn-sm" href="hapus.php?id_penyewa=<?= $row['id_penyewa'] ?>" onclick="return confirm('Yakin ingin menghapus data ini?')" data-toggle="tooltip" title="Hapus">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+
+                                                    <?php if ($row['status'] === 'diblokir'): ?>
+                                                        <a class="btn btn-success btn-sm" href="aktifkan_penyewa.php?id_penyewa=<?= $row['id_penyewa'] ?>" onclick="return confirm('Yakin ingin mengaktifkan kembali penyewa ini?')" data-toggle="tooltip" title="Aktifkan Penyewa">
+                                                            Aktifkan Penyewa
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <a class="btn btn-secondary btn-sm" href="blok_penyewa.php?id_penyewa=<?= $row['id_penyewa'] ?>" onclick="return confirm('Yakin ingin memblokir penyewa ini?')" data-toggle="tooltip" title="Blok Penyewa">
+                                                            Blok Penyewa
+                                                        </a>
+                                                    <?php endif; ?>
+                                                </td>
+
                                                 </tr>
                                             <?php endwhile; ?>
                                         <?php else: ?>
