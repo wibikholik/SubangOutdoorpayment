@@ -150,9 +150,13 @@ if (isset($_SESSION['notification'])) {
                                                 </form>
                                             <?php endif; ?>
                                             
-                                            <a href="hapus_pembayaran.php?id=<?= $row['id_pembayaran'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus data pembayaran ini secara permanen?')" data-toggle="tooltip" title="Hapus Permanen">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
+                                            <form action="hapus_pembayaran.php" method="post" style="display:inline;" onsubmit="return confirm('Yakin ingin menghapus data pembayaran ini secara permanen?')">
+                                                <input type="hidden" name="id_pembayaran" value="<?= $row['id_pembayaran'] ?>">
+                                                <button type="submit" class="btn btn-sm btn-danger" data-toggle="tooltip" title="Hapus Permanen">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>

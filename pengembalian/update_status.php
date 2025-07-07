@@ -21,7 +21,7 @@ $denda = floatval($_POST['denda'] ?? 0);
 $catatan = trim($_POST['catatan'] ?? '');
 
 // Validasi input penting
-$status_valid = ['Selesai Dikembalikan', 'Ditolak Pengembalian'];
+$status_valid = ['selesai dikembalikan', 'Ditolak Pengembalian'];
 if (!$id_pengembalian || !in_array($status_baru, $status_valid)) {
     header("Location: pengembalian.php?error=invalid_input");
     exit;
@@ -63,14 +63,34 @@ mysqli_stmt_execute($stmt);
 mysqli_stmt_close($stmt);
 
 // Jika status pengembalian selesai → update stok barang
-if ($status_baru === 'Selesai Dikembalikan') {
-    $qDetail = mysqli_query($koneksi, "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = $id_transaksi");
-    while ($row = mysqli_fetch_assoc($qDetail)) {
-        $id_barang = $row['id_barang'];
-        $jumlah = $row['jumlah_barang'];
-        mysqli_query($koneksi, "UPDATE barang SET stok = stok + $jumlah WHERE id_barang = $id_barang");
+if (strtolower(trim($status_baru)) === 'selesai dikembalikan') {
+    // Ambil data detail transaksi
+    $stmtDetail = $koneksi->prepare("SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = ?");
+    if ($stmtDetail) {
+        $stmtDetail->bind_param("i", $id_transaksi);
+        $stmtDetail->execute();
+        $resultDetail = $stmtDetail->get_result();
+
+        while ($row = $resultDetail->fetch_assoc()) {
+            $id_barang = $row['id_barang'];
+            $jumlah = $row['jumlah_barang'];
+
+            // Update stok barang
+            $stmtUpdate = $koneksi->prepare("UPDATE barang SET stok = stok + ? WHERE id_barang = ?");
+            if ($stmtUpdate) {
+                $stmtUpdate->bind_param("ii", $jumlah, $id_barang);
+                $stmtUpdate->execute();
+                $stmtUpdate->close();
+            }
+        }
+
+        $stmtDetail->close();
     }
+
+    // Kirim invoice pengembalian
+    include 'kirim_invoice_pengembalian.php';
 }
+
 
 // Update status transaksi sesuai status pengembalian
 mysqli_query($koneksi, "UPDATE transaksi SET status = '$status_baru' WHERE id_transaksi = $id_transaksi");

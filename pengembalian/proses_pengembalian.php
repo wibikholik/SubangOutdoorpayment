@@ -17,10 +17,10 @@ $status_baru = $_POST['status_pengembalian'] ?? '';
 $denda = floatval($_POST['denda'] ?? 0);
 $catatan = trim($_POST['catatan'] ?? '');
 
-$status_valid = ['Selesai Dikembalikan', 'Ditolak Pengembalian'];
+$status_valid = ['selesai dikembalikan', 'Ditolak Pengembalian'];
 if (!$id_pengembalian || !in_array($status_baru, $status_valid)) {
     header("Location: pengembalian.php?error=invalid_input");
-    exit; 
+    exit;
 }
 
 $q = mysqli_query($koneksi, "SELECT * FROM pengembalian WHERE id_pengembalian = $id_pengembalian");
@@ -32,11 +32,12 @@ if (!$data_pengembalian) {
     header("Location: pengembalian.php?error=data_not_found");
     exit;
 }
+
 $id_transaksi = $data_pengembalian['id_transaksi'];
 $order_id = $data_pengembalian['order_id'];
 $snap_token = $data_pengembalian['snap_token'];
 
-// Buat order_id baru jika belum ada
+// Generate order_id jika denda > 0 dan order_id kosong
 if ($denda > 0 && empty($order_id)) {
     $prefix = 'DND-' . date('Ymd') . '-';
     $qMax = mysqli_query($koneksi, "SELECT MAX(order_id) AS max_id FROM pengembalian WHERE order_id LIKE '$prefix%'");
@@ -59,7 +60,7 @@ if (!empty($order_id)) {
 mysqli_stmt_execute($stmt);
 mysqli_stmt_close($stmt);
 
-// Snap Token hanya dibuat jika denda > 0 dan snap_token masih kosong
+// Jika denda ada & belum punya snap_token, buat token Midtrans
 if ($denda > 0 && empty($snap_token)) {
     require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -76,42 +77,48 @@ if ($denda > 0 && empty($snap_token)) {
     ");
     $dataTrans = mysqli_fetch_assoc($qTrans);
 
-    $params = [
-        'transaction_details' => [
-            'order_id' => $order_id,
-            'gross_amount' => $denda
-        ],
-        'customer_details' => [
-            'first_name' => $dataTrans['nama'],
-            'email' => $dataTrans['email'],
-            'phone' => $dataTrans['nomor_hp']
-        ]
-    ];
+    if ($dataTrans) {
+        $params = [
+            'transaction_details' => [
+                'order_id' => $order_id,
+                'gross_amount' => $denda
+            ],
+            'customer_details' => [
+                'first_name' => $dataTrans['nama'],
+                'email' => $dataTrans['email'],
+                'phone' => $dataTrans['nomor_hp']
+            ]
+        ];
 
-    try {
-        $snapToken = \Midtrans\Snap::getSnapToken($params);
-        mysqli_query($koneksi, "UPDATE pengembalian SET snap_token = '$snapToken' WHERE id_pengembalian = $id_pengembalian");
-    } catch (Exception $e) {
-        error_log("Gagal generate SnapToken: " . $e->getMessage());
-        echo "Gagal buat token: " . $e->getMessage();
-        exit;
+        try {
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
+            mysqli_query($koneksi, "UPDATE pengembalian SET snap_token = '$snapToken' WHERE id_pengembalian = $id_pengembalian");
+        } catch (Exception $e) {
+            error_log("Gagal generate SnapToken: " . $e->getMessage());
+            echo "Gagal buat token: " . $e->getMessage();
+            exit;
+        }
     }
 }
 
-// Update stok jika selesai dikembalikan
-if ($status_baru === 'Selesai Dikembalikan') {
+// Jika status selesai, kembalikan stok dan kirim invoice
+if (strtolower($status_baru) === 'selesai dikembalikan') {
     $qDetail = mysqli_query($koneksi, "SELECT id_barang, jumlah_barang FROM detail_transaksi WHERE id_transaksi = $id_transaksi");
     while ($row = mysqli_fetch_assoc($qDetail)) {
         $id_barang = $row['id_barang'];
         $jumlah = $row['jumlah_barang'];
         mysqli_query($koneksi, "UPDATE barang SET stok = stok + $jumlah WHERE id_barang = $id_barang");
     }
+
+    // Kirim invoice
+    include 'kirim_invoice_pengembalian.php';
+    kirimInvoicePengembalian($koneksi, $id_transaksi, $denda); // <-- Tambahkan ini
 }
 
 // Update status transaksi
 mysqli_query($koneksi, "UPDATE transaksi SET status = '$status_baru' WHERE id_transaksi = $id_transaksi");
 
-// Update status pembayaran jika ada
+// Update juga status pembayaran jika ada
 $cekBayar = mysqli_query($koneksi, "SELECT id_pembayaran FROM pembayaran WHERE id_transaksi = $id_transaksi");
 if (mysqli_num_rows($cekBayar) > 0) {
     $rowBayar = mysqli_fetch_assoc($cekBayar);

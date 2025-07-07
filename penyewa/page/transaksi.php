@@ -132,6 +132,8 @@ $result_transaksi = $stmt->get_result();
           <div class="d-flex justify-content-between mt-3 align-items-center">
             <div><strong>Total:</strong> Rp<?= number_format($transaksi['total_harga_sewa'], 0, ',', '.'); ?></div>
             <div>
+              <a href="detail_transaksi.php?id_transaksi=<?= $id_transaksi ?>" class="btn btn-info btn-sm">Lihat Detail</a>
+
               <?php if ($tipe === 'online' && strtolower($status) === 'belumbayar' && !empty($transaksi['snap_token'])): ?>
                 <form action="pembayaran.php" method="GET" class="d-inline">
                   <input type="hidden" name="id_transaksi" value="<?= $id_transaksi; ?>">

@@ -175,6 +175,9 @@ while ($row = mysqli_fetch_assoc($pengembalian)) {
                 <a href="laporan_keseluruhan_pdf.php?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>" target="_blank" class="btn btn-success mb-3">
                     <i class="fas fa-file-pdf"></i> Unduh Laporan Excel Keseluruhan
                 </a>
+                <a href="laporan_pdf.php?bulan=<?= $bulan ?>&tahun=<?= $tahun ?>" target="_blank" class="btn btn-danger mb-3">
+                    <i class="fas fa-file-pdf"></i> Unduh Laporan Pdf Keseluruhan
+                </a>
 
                 <!-- Filter -->
                 <form method="get" class="mb-4">

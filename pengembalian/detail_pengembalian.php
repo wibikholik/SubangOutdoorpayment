@@ -155,7 +155,7 @@ if (!$checklistResult) {
                                     <div class="form-group">
                                         <label for="status_pengembalian">Status Pengembalian</label>
                                         <select name="status_pengembalian" id="status_pengembalian" class="form-control" required>
-                                            <option value="Selesai Dikembalikan">Selesai Dikembalikan</option>
+                                            <option value="selesai dikembalikan">Selesai Dikembalikan</option>
                                             <option value="Ditolak Pengembalian">Ditolak Pengembalian</option>
                                         </select>
                                     </div>
